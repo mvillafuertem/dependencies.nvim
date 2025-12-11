@@ -65,6 +65,7 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with +=")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should parse += dependency correctly")
+  assert_equal(deps[1].line, 1, "Should capture line 1")
 end)
 
 test("single dependency with += operator and variable version", function()
@@ -81,6 +82,7 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % nettyVer
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with += and variable")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should resolve variable with += operator")
+  assert_equal(deps[1].line, 2, "Should capture line 2")
 end)
 
 test("single dependency with += operator, scope and excludeAll with literal version", function()
@@ -99,6 +101,7 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with += despite scope and excludeAll")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should extract main dependency ignoring scope and exclusions")
+  assert_equal(deps[1].line, 1, "Should capture line 1")
 end)
 
 test("single dependency with += operator, scope and excludeAll with variable version", function()
@@ -118,6 +121,7 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % nettyVer
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with += and variable despite scope and excludeAll")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should resolve variable and ignore scope and exclusions")
+  assert_equal(deps[1].line, 2, "Should capture line 2")
 end)
 
 -- ============================================================================
@@ -157,6 +161,7 @@ libraryDependencies ++= Seq(
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency")
   assert_equal(deps[1].dependency, "com.github.jwt-scala:jwt-circe:9.4.5", "Should parse dependency with %% correctly")
+  assert_equal(deps[1].line, 2, "Should capture line 2")
 end)
 
 -- ============================================================================
@@ -179,6 +184,7 @@ libraryDependencies ++= Seq(
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency")
   assert_equal(deps[1].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "Should resolve version variable")
+  assert_equal(deps[1].line, 3, "Should capture line 3")
 end)
 
 -- ============================================================================
@@ -202,7 +208,9 @@ libraryDependencies ++= Seq(
   -- t h e n
   assert_equal(#deps, 2, "Should find two dependencies")
   assert_equal(deps[1].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "First dependency should resolve version")
+  assert_equal(deps[1].line, 3, "First dependency on line 3")
   assert_equal(deps[2].dependency, "io.gatling:gatling-test-framework:3.8.4", "Second dependency should resolve version")
+  assert_equal(deps[2].line, 4, "Second dependency on line 4")
 end)
 
 test("dependencies are returned in document order in Seq", function()
@@ -244,6 +252,7 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 1, "Should deduplicate identical dependencies")
+  assert_equal(deps[1].line, 2, "Should capture line 2 (first occurrence)")
 end)
 
 test("mixed literals and variables", function()
@@ -266,8 +275,11 @@ libraryDependencies ++= Seq(
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should resolve first variable")
+  assert_equal(deps[1].line, 5, "First dependency on line 5")
   assert_equal(deps[2].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "Should resolve second variable")
+  assert_equal(deps[2].line, 6, "Second dependency on line 6")
   assert_equal(deps[3].dependency, "com.github.jwt-scala:jwt-circe:9.4.5", "Should use literal version")
+  assert_equal(deps[3].line, 7, "Third dependency on line 7")
 end)
 
 -- ============================================================================
@@ -291,8 +303,11 @@ libraryDependencies ++= Seq(
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
   assert_equal(deps[1].dependency, "software.amazon.awssdk:auth:2.40.2", "First dependency from map pattern")
+  assert_equal(deps[1].line, 2, "First dependency on line 2")
   assert_equal(deps[2].dependency, "software.amazon.awssdk:http-auth-aws:2.40.2", "Second dependency from map pattern")
+  assert_equal(deps[2].line, 3, "Second dependency on line 3")
   assert_equal(deps[3].dependency, "software.amazon.awssdk:opensearchserverless:2.40.2", "Third dependency from map pattern")
+  assert_equal(deps[3].line, 4, "Third dependency on line 4")
 end)
 
 test("dependencies with map pattern using variable", function()
@@ -313,8 +328,11 @@ libraryDependencies ++= Seq(
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
   assert_equal(deps[1].dependency, "io.circe:circe-core:0.14.1", "Should resolve version variable in map")
+  assert_equal(deps[1].line, 3, "First dependency on line 3")
   assert_equal(deps[2].dependency, "io.circe:circe-generic:0.14.1", "Should resolve version variable in map")
+  assert_equal(deps[2].line, 4, "Second dependency on line 4")
   assert_equal(deps[3].dependency, "io.circe:circe-parser:0.14.1", "Should resolve version variable in map")
+  assert_equal(deps[3].line, 5, "Third dependency on line 5")
 end)
 
 test("map pattern with version and scope modifier", function()
@@ -335,8 +353,11 @@ libraryDependencies ++= Seq(
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
   assert_equal(deps[1].dependency, "io.circe:circe-core:0.14.1", "Should extract main dependency ignoring scope in map")
+  assert_equal(deps[1].line, 3, "First dependency on line 3")
   assert_equal(deps[2].dependency, "io.circe:circe-generic:0.14.1", "Should extract main dependency ignoring scope in map")
+  assert_equal(deps[2].line, 4, "Second dependency on line 4")
   assert_equal(deps[3].dependency, "io.circe:circe-parser:0.14.1", "Should extract main dependency ignoring scope in map")
+  assert_equal(deps[3].line, 5, "Third dependency on line 5")
 end)
 
 test("chained map pattern with version and scope", function()
@@ -357,8 +378,11 @@ libraryDependencies ++= Seq(
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies with chained map")
   assert_equal(deps[1].dependency, "io.circe:circe-core:0.14.1", "Should resolve version from first map")
+  assert_equal(deps[1].line, 3, "First dependency on line 3")
   assert_equal(deps[2].dependency, "io.circe:circe-generic:0.14.1", "Should resolve version from first map")
+  assert_equal(deps[2].line, 4, "Second dependency on line 4")
   assert_equal(deps[3].dependency, "io.circe:circe-parser:0.14.1", "Should resolve version from first map")
+  assert_equal(deps[3].line, 5, "Third dependency on line 5")
 end)
 
 -- ============================================================================
@@ -380,6 +404,7 @@ libraryDependencies ++= Seq(
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency despite modifiers")
   assert_equal(deps[1].dependency, "com.github.jwt-scala:jwt-circe:9.4.5", "Should extract main dependency ignoring modifiers")
+  assert_equal(deps[1].line, 2, "Should capture line 2")
 end)
 
 -- ============================================================================
@@ -435,8 +460,11 @@ libraryDependencies ++= Seq(
     "io.circe:circe-parser:0.14.1"
   }
 
+  local expected_lines = {8, 9, 10, 11, 13, 14, 15, 21, 22, 23}
+
   for i, expected_dep in ipairs(expected_deps) do
     assert_equal(deps[i].dependency, expected_dep, string.format("Dependency %d should match", i))
+    assert_equal(deps[i].line, expected_lines[i], string.format("Dependency %d should be on line %d", i, expected_lines[i]))
   end
 end)
 
