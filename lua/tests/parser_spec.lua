@@ -50,22 +50,30 @@ print("=== Parser Tests ===\n")
 -- ============================================================================
 
 test("empty build.sbt returns empty dependencies", function()
+  -- g i v e n
   local content = ""
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 0, "Should return empty array for empty file")
 end)
 
 test("build.sbt with only comments returns empty dependencies", function()
+  -- g i v e n
   local content = [[
 // This is a comment
 /* Multi-line
    comment */
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 0, "Should return empty array for file with only comments")
 end)
 
@@ -74,29 +82,38 @@ end)
 -- ============================================================================
 
 test("single dependency with += operator and literal version", function()
+  -- g i v e n
   local content = [[
 libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.Final"
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with +=")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should parse += dependency correctly")
 end)
 
 test("single dependency with += operator and variable version", function()
+  -- g i v e n
   local content = [[
 val nettyVersion = "2.0.74.Final"
 libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % nettyVersion
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with += and variable")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should resolve variable with += operator")
 end)
 
 test("single dependency with += operator, scope and excludeAll with literal version", function()
+  -- g i v e n
   local content = [[
 libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.Final" % "test,it" excludeAll(
   ExclusionRule(organization = "com.sun.jmx", name = "jmxi"),
@@ -104,13 +121,17 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with += despite scope and excludeAll")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should extract main dependency ignoring scope and exclusions")
 end)
 
 test("single dependency with += operator, scope and excludeAll with variable version", function()
+  -- g i v e n
   local content = [[
 val nettyVersion = "2.0.74.Final"
 libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % nettyVersion % "test,it" excludeAll(
@@ -119,8 +140,11 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % nettyVer
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with += and variable despite scope and excludeAll")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should resolve variable and ignore scope and exclusions")
 end)
@@ -130,28 +154,36 @@ end)
 -- ============================================================================
 
 test("simple dependency in Seq with literal version", function()
+  -- g i v e n
   local content = [[
 libraryDependencies ++= Seq(
   "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.Final"
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 1, "Should find one dependency")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should parse dependency correctly")
   assert_equal(deps[1].line, 2, "Should capture correct line number")
 end)
 
 test("dependency with double percent operator in Seq", function()
+  -- g i v e n
   local content = [[
 libraryDependencies ++= Seq(
   "com.github.jwt-scala" %% "jwt-circe" % "9.4.5"
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 1, "Should find one dependency")
   assert_equal(deps[1].dependency, "com.github.jwt-scala:jwt-circe:9.4.5", "Should parse dependency with %% correctly")
 end)
@@ -161,6 +193,7 @@ end)
 -- ============================================================================
 
 test("dependency with variable version in Seq", function()
+  -- g i v e n
   local content = [[
 val gatlingVersion = "3.8.4"
 libraryDependencies ++= Seq(
@@ -168,8 +201,11 @@ libraryDependencies ++= Seq(
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 1, "Should find one dependency")
   assert_equal(deps[1].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "Should resolve version variable")
 end)
@@ -179,6 +215,7 @@ end)
 -- ============================================================================
 
 test("multiple dependencies with same version variable", function()
+  -- g i v e n
   local content = [[
 val gatlingVersion = "3.8.4"
 libraryDependencies ++= Seq(
@@ -187,14 +224,18 @@ libraryDependencies ++= Seq(
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 2, "Should find two dependencies")
   assert_equal(deps[1].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "First dependency should resolve version")
   assert_equal(deps[2].dependency, "io.gatling:gatling-test-framework:3.8.4", "Second dependency should resolve version")
 end)
 
 test("dependencies are returned in document order in Seq", function()
+  -- g i v e n
   local content = [[
 libraryDependencies ++= Seq(
   "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.Final",
@@ -203,8 +244,11 @@ libraryDependencies ++= Seq(
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
   assert_equal(deps[1].line, 2, "First dependency on line 2")
   assert_equal(deps[2].line, 3, "Second dependency on line 3")
@@ -215,6 +259,7 @@ libraryDependencies ++= Seq(
 end)
 
 test("no duplicate dependencies in Seq", function()
+  -- g i v e n
   local content = [[
 libraryDependencies ++= Seq(
   "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.Final",
@@ -222,12 +267,16 @@ libraryDependencies ++= Seq(
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 1, "Should deduplicate identical dependencies")
 end)
 
 test("mixed literals and variables", function()
+  -- g i v e n
   local content = [[
 val nettyVersion = "2.0.74.Final"
 val gatlingVersion = "3.8.4"
@@ -239,8 +288,11 @@ libraryDependencies ++= Seq(
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
   assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should resolve first variable")
   assert_equal(deps[2].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "Should resolve second variable")
@@ -252,6 +304,7 @@ end)
 -- ============================================================================
 
 test("dependencies in Seq with map pattern", function()
+  -- g i v e n
   local content = [[
 libraryDependencies ++= Seq(
   "software.amazon.awssdk" % "auth",
@@ -260,8 +313,11 @@ libraryDependencies ++= Seq(
 ).map(_ % "2.40.2")
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
   assert_equal(deps[1].dependency, "software.amazon.awssdk:auth:2.40.2", "First dependency from map pattern")
   assert_equal(deps[2].dependency, "software.amazon.awssdk:http-auth-aws:2.40.2", "Second dependency from map pattern")
@@ -269,6 +325,7 @@ libraryDependencies ++= Seq(
 end)
 
 test("dependencies with map pattern using variable", function()
+  -- g i v e n
   local content = [[
 val circeVersion = "0.14.1"
 libraryDependencies ++= Seq(
@@ -278,8 +335,11 @@ libraryDependencies ++= Seq(
 ).map(_ % circeVersion)
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
   assert_equal(deps[1].dependency, "io.circe:circe-core:0.14.1", "Should resolve version variable in map")
   assert_equal(deps[2].dependency, "io.circe:circe-generic:0.14.1", "Should resolve version variable in map")
@@ -287,6 +347,7 @@ libraryDependencies ++= Seq(
 end)
 
 test("map pattern with version and scope modifier", function()
+  -- g i v e n
   local content = [[
 val circeVersion = "0.14.1"
 libraryDependencies ++= Seq(
@@ -296,8 +357,11 @@ libraryDependencies ++= Seq(
 ).map(_ % circeVersion % "test,it")
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
   assert_equal(deps[1].dependency, "io.circe:circe-core:0.14.1", "Should extract main dependency ignoring scope in map")
   assert_equal(deps[2].dependency, "io.circe:circe-generic:0.14.1", "Should extract main dependency ignoring scope in map")
@@ -305,6 +369,7 @@ libraryDependencies ++= Seq(
 end)
 
 test("chained map pattern with version and scope", function()
+  -- g i v e n
   local content = [[
 val circeVersion = "0.14.1"
 libraryDependencies ++= Seq(
@@ -314,8 +379,11 @@ libraryDependencies ++= Seq(
 ).map(_ % circeVersion).map(_ % "test,it")
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies with chained map")
   assert_equal(deps[1].dependency, "io.circe:circe-core:0.14.1", "Should resolve version from first map")
   assert_equal(deps[2].dependency, "io.circe:circe-generic:0.14.1", "Should resolve version from first map")
@@ -327,14 +395,18 @@ end)
 -- ============================================================================
 
 test("dependency with modifiers and exclude in Seq", function()
+  -- g i v e n
   local content = [[
 libraryDependencies ++= Seq(
   "com.github.jwt-scala" %% "jwt-circe" % "9.4.5" % "test,it" (exclude "org.netty" % "netty-all")
 )
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 1, "Should find one dependency despite modifiers")
   assert_equal(deps[1].dependency, "com.github.jwt-scala:jwt-circe:9.4.5", "Should extract main dependency ignoring modifiers")
 end)
@@ -344,6 +416,7 @@ end)
 -- ============================================================================
 
 test("complex real-world build.sbt", function()
+  -- g i v e n
   local content = [[
 enablePlugins(GatlingPlugin)
 
@@ -371,8 +444,11 @@ libraryDependencies ++= Seq(
 ).map(_ % circeVersion)
 ]]
   local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
   local deps = parser.extract_dependencies(bufnr)
 
+  -- t h e n
   assert_equal(#deps, 10, "Should find all 10 dependencies")
 
   local expected_deps = {
