@@ -32,6 +32,18 @@ end
 
 function M.setup()
   vim.api.nvim_create_user_command("SbtDeps", M.list_dependencies, {})
+
+  -- Autocommand para detectar archivos build.sbt y listar dependencias automáticamente
+  vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
+    pattern = "build.sbt",
+    callback = function()
+      -- Pequeño delay para asegurar que el buffer esté completamente cargado
+      vim.defer_fn(function()
+        M.list_dependencies()
+      end, 100)
+    end,
+    desc = "Listar dependencias automáticamente al abrir build.sbt"
+  })
 end
 
 M.setup()
