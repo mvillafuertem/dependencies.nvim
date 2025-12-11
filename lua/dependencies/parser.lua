@@ -4,6 +4,7 @@ local queries = require('dependencies.query')
 local val_query = queries.val_query
 local dep_query = queries.dep_query
 local map_query = queries.map_query
+local single_dep_query = queries.single_dep_query
 
 local function get_node_text_without_quotes(node, bufnr)
   return vim.treesitter.get_node_text(node, bufnr):gsub('"', '')
@@ -185,16 +186,108 @@ local function collect_mapped_dependencies(root, bufnr, val_values, dependencies
   for id, node in map_query:iter_captures(root, bufnr, 0, -1) do
     local capture_name = map_query.captures[id]
 
-    if capture_name == "map_field" then
+    if capture_name == "map_field" or capture_name == "map_field2" then
       if not is_map_field(vim.treesitter.get_node_text(node, bufnr)) then
         map_data = {}
       end
-    elseif capture_name == "seq_args" then
+    elseif capture_name == "seq_args" or capture_name == "seq_args2" then
       map_data.seq_args = node
-    elseif capture_name == "version" then
+    elseif capture_name == "version" or capture_name == "version2" then
       map_data.version_text = get_node_text_without_quotes(node, bufnr)
       process_map_dependencies(map_data, bufnr, val_values, dependencies, seen)
       map_data = {}
+    end
+  end
+end
+
+local function is_library_dependencies(identifier_text)
+  return identifier_text == "libraryDependencies"
+end
+
+local function is_plus_equals_operator(operator_text)
+  return operator_text == "+="
+end
+
+local function extract_dependency_from_node(node, bufnr)
+  if node:type() ~= "infix_expression" then
+    return nil
+  end
+
+  -- Debe ser: (infix_expression left: (infix_expression ...) operator: % right: version)
+  local left_node = node:child(0)
+  local version_node = node:child(2)
+
+  if not left_node or not version_node then
+    return nil
+  end
+
+  -- left_node debe ser: (infix_expression left: org operator: % right: artifact)
+  if left_node:type() ~= "infix_expression" then
+    return nil
+  end
+
+  local org_node = left_node:child(0)
+  local artifact_node = left_node:child(2)
+
+  if not org_node or not artifact_node then
+    return nil
+  end
+
+  -- Verificar que org y artifact sean strings
+  if org_node:type() ~= "string" or artifact_node:type() ~= "string" then
+    return nil
+  end
+
+  -- version puede ser string o identifier (variable)
+  if version_node:type() ~= "string" and version_node:type() ~= "identifier" then
+    return nil
+  end
+
+  return {
+    org = get_node_text_without_quotes(org_node, bufnr),
+    artifact = get_node_text_without_quotes(artifact_node, bufnr),
+    version_text = get_node_text_without_quotes(version_node, bufnr)
+  }
+end
+
+local function collect_single_dependencies(root, bufnr, val_values, dependencies, seen)
+  local current_match = {}
+
+  for id, node in single_dep_query:iter_captures(root, bufnr, 0, -1) do
+    local capture_name = single_dep_query.captures[id]
+
+    if capture_name == "single_dep_node" then
+      current_match.dep_node = node
+    elseif capture_name == "lib_dep_name" then
+      local identifier_text = vim.treesitter.get_node_text(node, bufnr)
+      if is_library_dependencies(identifier_text) then
+        current_match.lib_dep_name = true
+      else
+        current_match.lib_dep_name = false
+      end
+    elseif capture_name == "plus_eq" then
+      local operator_text = vim.treesitter.get_node_text(node, bufnr)
+      if is_plus_equals_operator(operator_text) then
+        current_match.plus_eq = true
+      else
+        current_match.plus_eq = false
+      end
+    elseif capture_name == "org_single" then
+      current_match.org = get_node_text_without_quotes(node, bufnr)
+    elseif capture_name == "artifact_single" then
+      current_match.artifact = get_node_text_without_quotes(node, bufnr)
+    elseif capture_name == "version_single" then
+      -- Esta es la última captura, procesamos el match completo
+      current_match.version_text = get_node_text_without_quotes(node, bufnr)
+
+      if current_match.lib_dep_name and current_match.plus_eq and
+         current_match.org and current_match.artifact and current_match.version_text and current_match.dep_node then
+        local version = resolve_version(current_match.version_text, val_values)
+        local dep = create_dependency_string(current_match.org, current_match.artifact, version)
+        local line_num = current_match.dep_node:range() + 1
+        add_dependency_if_new(dep, line_num, dependencies, seen)
+      end
+      current_match = {}
     end
   end
 end
@@ -205,6 +298,7 @@ local function find_dependencies(root, bufnr, val_values)
 
   collect_direct_dependencies(root, bufnr, val_values, dependencies, seen)
   collect_mapped_dependencies(root, bufnr, val_values, dependencies, seen)
+  collect_single_dependencies(root, bufnr, val_values, dependencies, seen)
 
   return dependencies
 end
