@@ -1,49 +1,20 @@
+-- Parser Tests
+-- Run from command line: nvim --headless -c "set runtimepath+=." -c "luafile lua/tests/parser_spec.lua" -c "qa"
+
 local parser = require('dependencies.parser')
+local helper = require('tests.test_helper')
 
-local function setup_buffer_with_content(content)
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  local lines = vim.split(content, "\n")
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-  vim.api.nvim_buf_set_option(bufnr, 'filetype', 'scala')
-  vim.wait(100)
-  return bufnr
-end
+-- Extract helper functions for convenience
+local setup_buffer_with_content = helper.setup_buffer_with_content
+local assert_equal = helper.assert_equal
+local assert_table_equal = helper.assert_table_equal
+local test = helper.test
 
-local function assert_equal(actual, expected, message)
-  if actual ~= expected then
-    error(string.format("%s\nExpected: %s\nActual: %s", message, vim.inspect(expected), vim.inspect(actual)))
-  end
-end
+-- Reset test counters at the start
+helper.reset_counters()
 
-local function assert_table_equal(actual, expected, message)
-  if vim.inspect(actual) ~= vim.inspect(expected) then
-    error(string.format("%s\nExpected: %s\nActual: %s", message, vim.inspect(expected), vim.inspect(actual)))
-  end
-end
-
-local function run_test(name, test_fn)
-  local ok, err = pcall(test_fn)
-  if ok then
-    print(string.format("✓ %s", name))
-  else
-    print(string.format("✗ %s", name))
-    print(string.format("  Error: %s", err))
-  end
-  return ok
-end
-
-local tests_passed = 0
-local tests_failed = 0
-
-local function test(name, fn)
-  if run_test(name, fn) then
-    tests_passed = tests_passed + 1
-  else
-    tests_failed = tests_failed + 1
-  end
-end
-
-print("=== Parser Tests ===\n")
+io.write("=== Parser Tests ===\n")
+io.flush()
 
 -- ============================================================================
 -- Casos base: archivos vacíos o sin dependencias
@@ -468,4 +439,8 @@ libraryDependencies ++= Seq(
     assert_equal(deps[i].dependency, expected_dep, string.format("Dependency %d should match", i))
   end
 end)
+
+-- Print test summary
+helper.print_summary()
+
 
