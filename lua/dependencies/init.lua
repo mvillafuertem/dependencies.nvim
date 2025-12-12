@@ -100,12 +100,10 @@ function M.setup()
   vim.api.nvim_create_autocmd("InsertLeave", {
     pattern = "build.sbt",
     callback = function()
-      local bufnr = vim.api.nvim_get_current_buf()
-      -- El virtual text volverá a aparecer al guardar el archivo
-      -- No se hace ninguna consulta a Maven Central aquí
-      virtual_text.clear(bufnr)
+      -- Al salir del modo inserción, actualizar dependencias
+      M.list_dependencies_with_versions()
     end,
-    desc = "Limpiar virtual text al salir del modo inserción"
+    desc = "Actualizar dependencias al salir del modo inserción"
   })
 end
 
