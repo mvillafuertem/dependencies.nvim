@@ -14,13 +14,17 @@ end
 
 --- Applies virtual text to show latest versions for dependencies
 --- @param bufnr number Buffer number
---- @param deps_with_versions table Array of {line, dependency, latest}
+--- @param deps_with_versions table Array of {line, dependency, current, latest}
 --- @return number Number of extmarks created
 function M.apply_virtual_text(bufnr, deps_with_versions)
   local extmarks_created = 0
 
   for _, dep_info in ipairs(deps_with_versions) do
-    if dep_info.latest and dep_info.latest ~= "unknown" then
+    -- Solo mostrar si:
+    -- 1. Existe una versión latest
+    -- 2. La versión latest no es "unknown"
+    -- 3. La versión actual es diferente de la latest
+    if dep_info.latest and dep_info.latest ~= "unknown" and dep_info.current ~= dep_info.latest then
       vim.api.nvim_buf_set_extmark(bufnr, M.ns, dep_info.line - 1, 0, {
         virt_text = { { string.format('  ← latest: %s', dep_info.latest), 'Comment' } },
         virt_text_pos = 'eol',

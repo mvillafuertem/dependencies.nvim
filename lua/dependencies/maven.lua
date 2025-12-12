@@ -167,6 +167,7 @@ function M.enrich_with_latest_versions(dependencies, scala_version)
   for _, dep_info in ipairs(dependencies) do
     local parsed = parse_dependency(dep_info.dependency)
     local latest_version = nil
+    local current_version = parsed and parsed.version or "unknown"
 
     if parsed then
       latest_version, _ = fetch_latest_version(parsed.group_id, parsed.artifact_id, scala_version)
@@ -175,6 +176,7 @@ function M.enrich_with_latest_versions(dependencies, scala_version)
     table.insert(result, {
       line = dep_info.line,
       dependency = dep_info.dependency,
+      current = current_version,
       latest = latest_version or "unknown"
     })
   end
