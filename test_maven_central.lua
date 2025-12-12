@@ -11,8 +11,9 @@ local function test_maven_url(group_id, artifact_id, scala_version)
     artifact_name = artifact_id .. "_" .. scala_version
   end
 
+  -- Usar core=gav para obtener versiones individuales (más preciso)
   local url = string.format(
-    "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=1&wt=json",
+    "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&core=gav&rows=1&wt=json",
     group_id,
     artifact_name
   )
@@ -25,7 +26,8 @@ local function test_maven_url(group_id, artifact_id, scala_version)
   local success, json = pcall(vim.fn.json_decode, response)
 
   if success and json.response and json.response.docs and #json.response.docs > 0 then
-    local version = json.response.docs[1].latestVersion or json.response.docs[1].v
+    -- Con core=gav, la versión está en el campo 'v'
+    local version = json.response.docs[1].v
     print(string.format("  ✅ Encontrado: %s\n", version))
     return version
   else
