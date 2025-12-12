@@ -1,6 +1,7 @@
 local M = {}
 
 local parser = require('dependencies.parser')
+local maven = require('dependencies.maven')
 
 local function extract_dependency_strings(dependencies)
   local result = {}
@@ -20,6 +21,16 @@ local function print_dependencies(dependencies)
   print(vim.inspect(extract_dependency_strings(dependencies)))
 end
 
+local function print_dependencies_with_versions(dependencies_with_versions)
+  print("=== Dependencias con últimas versiones ===")
+  for _, dep_info in ipairs(dependencies_with_versions) do
+    print(string.format("%d: %s -> latest: %s", dep_info.line, dep_info.dependency, dep_info.latest))
+  end
+  print(string.format("\nTotal: %d dependencias", #dependencies_with_versions))
+  print("\nLista completa:")
+  print(vim.inspect(dependencies_with_versions))
+end
+
 function M.extract_dependencies(bufnr)
   return parser.extract_dependencies(bufnr)
 end
@@ -30,8 +41,17 @@ function M.list_dependencies()
   return deps
 end
 
+function M.list_dependencies_with_versions()
+  local deps = M.extract_dependencies(vim.api.nvim_get_current_buf())
+  print("Consultando Maven Central para obtener últimas versiones...")
+  local deps_with_versions = maven.enrich_with_latest_versions(deps)
+  print_dependencies_with_versions(deps_with_versions)
+  return deps_with_versions
+end
+
 function M.setup()
   vim.api.nvim_create_user_command("SbtDeps", M.list_dependencies, {})
+  vim.api.nvim_create_user_command("SbtDepsLatest", M.list_dependencies_with_versions, {})
 
   -- Autocommand para detectar archivos build.sbt y listar dependencias automáticamente
   vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {

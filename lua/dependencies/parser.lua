@@ -1,10 +1,23 @@
 local M = {}
 
 local queries = require('dependencies.query')
-local val_query = queries.val_query
-local dep_query = queries.dep_query
-local map_query = queries.map_query
-local single_dep_query = queries.single_dep_query
+
+-- Lazy loading de queries - accederlas solo cuando se necesiten
+local function get_val_query()
+  return queries.val_query
+end
+
+local function get_dep_query()
+  return queries.dep_query
+end
+
+local function get_map_query()
+  return queries.map_query
+end
+
+local function get_single_dep_query()
+  return queries.single_dep_query
+end
 
 local function get_node_text_without_quotes(node, bufnr)
   return vim.treesitter.get_node_text(node, bufnr):gsub('"', '')
@@ -29,6 +42,7 @@ end
 local function find_vals(root, bufnr)
   local val_values = {}
   local current_val = {}
+  local val_query = get_val_query()
 
   for id, node in val_query:iter_captures(root, bufnr, 0, -1) do
     local capture_name = val_query.captures[id]
@@ -108,6 +122,7 @@ end
 local function collect_direct_dependencies(root, bufnr, val_values, dependencies, seen)
   local current_match = {}
   local last_dep_node_line = -1
+  local dep_query = get_dep_query()
 
   for id, node in dep_query:iter_captures(root, bufnr, 0, -1) do
     local capture_name = dep_query.captures[id]
@@ -182,6 +197,7 @@ end
 
 local function collect_mapped_dependencies(root, bufnr, val_values, dependencies, seen)
   local map_data = {}
+  local map_query = get_map_query()
 
   for id, node in map_query:iter_captures(root, bufnr, 0, -1) do
     local capture_name = map_query.captures[id]
@@ -252,6 +268,7 @@ end
 
 local function collect_single_dependencies(root, bufnr, val_values, dependencies, seen)
   local current_match = {}
+  local single_dep_query = get_single_dep_query()
 
   for id, node in single_dep_query:iter_captures(root, bufnr, 0, -1) do
     local capture_name = single_dep_query.captures[id]
