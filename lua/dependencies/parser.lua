@@ -342,26 +342,23 @@ end
 -- Busca scalaVersion en el build.sbt
 local function find_scala_version(root, bufnr)
   local scala_version_query = get_scala_version_query()
+  local current_match = {}
 
   for id, node in scala_version_query:iter_captures(root, bufnr, 0, -1) do
     local capture_name = scala_version_query.captures[id]
 
     if capture_name == "scala_version_name" then
-      local name = vim.treesitter.get_node_text(node, bufnr)
-      if name == "scalaVersion" then
-        -- Buscar el valor en la siguiente captura
-        local next_id, next_node = scala_version_query:iter_captures(root, bufnr, 0, -1)()
-        if next_node then
-          local version = get_node_text_without_quotes(next_node, bufnr)
-          return extract_scala_binary_version(version)
-        end
-      end
+      current_match.name = vim.treesitter.get_node_text(node, bufnr)
     elseif capture_name == "scala_version_value" then
-      -- Ya tenemos el valor, extraer la versión binaria
-      local version = get_node_text_without_quotes(node, bufnr)
-      if version then
-        return extract_scala_binary_version(version)
+      current_match.value = get_node_text_without_quotes(node, bufnr)
+
+      -- Cuando tenemos ambos, verificar y retornar
+      if current_match.name == "scalaVersion" and current_match.value then
+        return extract_scala_binary_version(current_match.value)
       end
+
+      -- Resetear para el siguiente match
+      current_match = {}
     end
   end
 

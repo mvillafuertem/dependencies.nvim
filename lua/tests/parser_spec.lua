@@ -468,6 +468,135 @@ libraryDependencies ++= Seq(
   end
 end)
 
+-- ============================================================================
+-- Tests para detección de versión de Scala
+-- ============================================================================
+
+test("get_scala_version detects scalaVersion with := operator", function()
+  -- g i v e n
+  local content = [[
+scalaVersion := "2.13.10"
+]]
+  local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
+  local scala_version = parser.get_scala_version(bufnr)
+
+  -- t h e n
+  assert_equal(scala_version, "2.13", "Should extract binary version 2.13 from 2.13.10")
+end)
+
+test("get_scala_version detects scalaVersion with Scala 2.12", function()
+  -- g i v e n
+  local content = [[
+scalaVersion := "2.12.18"
+]]
+  local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
+  local scala_version = parser.get_scala_version(bufnr)
+
+  -- t h e n
+  assert_equal(scala_version, "2.12", "Should extract binary version 2.12 from 2.12.18")
+end)
+
+test("get_scala_version detects scalaVersion with Scala 3", function()
+  -- g i v e n
+  local content = [[
+scalaVersion := "3.3.1"
+]]
+  local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
+  local scala_version = parser.get_scala_version(bufnr)
+
+  -- t h e n
+  assert_equal(scala_version, "3.3", "Should extract binary version 3.3 from 3.3.1")
+end)
+
+test("get_scala_version returns nil when no scalaVersion found", function()
+  -- g i v e n
+  local content = [[
+libraryDependencies += "io.circe" %% "circe-core" % "0.14.1"
+]]
+  local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
+  local scala_version = parser.get_scala_version(bufnr)
+
+  -- t h e n
+  assert_equal(scala_version, nil, "Should return nil when scalaVersion is not found")
+end)
+
+test("get_scala_version detects scalaVersion in complex build.sbt", function()
+  -- g i v e n
+  local content = [[
+enablePlugins(GatlingPlugin)
+
+scalaVersion := "2.13.18"
+
+val gatlingVersion = "3.8.4"
+
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core" % "0.14.1"
+)
+]]
+  local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
+  local scala_version = parser.get_scala_version(bufnr)
+
+  -- t h e n
+  assert_equal(scala_version, "2.13", "Should find scalaVersion in complex file and extract 2.13")
+end)
+
+test("get_scala_version handles scalaVersion at end of file", function()
+  -- g i v e n
+  local content = [[
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core" % "0.14.1"
+)
+
+scalaVersion := "2.13.10"
+]]
+  local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
+  local scala_version = parser.get_scala_version(bufnr)
+
+  -- t h e n
+  assert_equal(scala_version, "2.13", "Should find scalaVersion even at end of file")
+end)
+
+test("get_scala_version handles scalaVersion with single quotes", function()
+  -- g i v e n
+  local content = [[
+scalaVersion := '2.13.10'
+]]
+  local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
+  local scala_version = parser.get_scala_version(bufnr)
+
+  -- t h e n
+  assert_equal(scala_version, "2.13", "Should handle single quotes")
+end)
+
+test("get_scala_version ignores commented scalaVersion", function()
+  -- g i v e n
+  local content = [[
+// scalaVersion := "2.12.18"
+scalaVersion := "2.13.10"
+]]
+  local bufnr = setup_buffer_with_content(content)
+
+  -- w h e n
+  local scala_version = parser.get_scala_version(bufnr)
+
+  -- t h e n
+  assert_equal(scala_version, "2.13", "Should ignore commented line and use active scalaVersion")
+end)
+
 -- Print test summary
 helper.print_summary()
 
