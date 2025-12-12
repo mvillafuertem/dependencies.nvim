@@ -2,6 +2,7 @@ local M = {}
 
 local parser = require('dependencies.parser')
 local maven = require('dependencies.maven')
+local virtual_text = require('dependencies.virtual_text')
 
 local function extract_dependency_strings(dependencies)
   local result = {}
@@ -53,6 +54,11 @@ function M.list_dependencies_with_versions()
   print("Consultando Maven Central para obtener últimas versiones...")
   local deps_with_versions = maven.enrich_with_latest_versions(deps, scala_version)
   print_dependencies_with_versions(deps_with_versions)
+
+  -- Limpiar y aplicar virtual text
+  virtual_text.clear(bufnr)
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
   return deps_with_versions
 end
 
