@@ -72,10 +72,40 @@ function M.setup()
     callback = function()
       -- Pequeño delay para asegurar que el buffer esté completamente cargado
       vim.defer_fn(function()
-        M.list_dependencies()
+        M.list_dependencies_with_versions()
       end, 100)
     end,
     desc = "Listar dependencias automáticamente al abrir build.sbt"
+  })
+
+  -- Autocommand para actualizar dependencias cuando se guarda el archivo
+  vim.api.nvim_create_autocmd("BufWritePost", {
+    pattern = "build.sbt",
+    callback = function()
+      M.list_dependencies_with_versions()
+    end,
+    desc = "Actualizar dependencias al guardar build.sbt"
+  })
+
+  -- Ocultar virtual text en modo inserción, mostrarlo en modo normal/visual
+  vim.api.nvim_create_autocmd("InsertEnter", {
+    pattern = "build.sbt",
+    callback = function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      virtual_text.clear(bufnr)
+    end,
+    desc = "Ocultar virtual text en modo inserción"
+  })
+
+  vim.api.nvim_create_autocmd("InsertLeave", {
+    pattern = "build.sbt",
+    callback = function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      -- El virtual text volverá a aparecer al guardar el archivo
+      -- No se hace ninguna consulta a Maven Central aquí
+      virtual_text.clear(bufnr)
+    end,
+    desc = "Limpiar virtual text al salir del modo inserción"
   })
 end
 

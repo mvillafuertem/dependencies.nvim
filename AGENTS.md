@@ -19,6 +19,11 @@
 ### Key Features
 
 - Automatic dependency detection when opening `build.sbt` files
+- **Auto-refresh on file save** (no excessive API calls while editing)
+- **Smart virtual text display**:
+  - Hidden in insert mode (no distractions while editing)
+  - Visible in normal/visual mode (see updates at a glance)
+  - Automatically updates when file is saved
 - Support for multiple dependency declaration styles:
   - Direct: `"org" % "artifact" % "version"`
   - Seq with map: `Seq(...).map(_ % "version")`
