@@ -19,6 +19,10 @@ local function get_single_dep_query()
   return queries.single_dep_query
 end
 
+local function get_scala_version_query()
+  return queries.get_scala_version_query()
+end
+
 local function get_node_text_without_quotes(node, bufnr)
   return vim.treesitter.get_node_text(node, bufnr):gsub('"', '')
 end
@@ -325,6 +329,45 @@ local function parse_tree(bufnr)
   return parser:parse()[1]:root()
 end
 
+-- Extrae la versión de Scala del archivo (ej: "2.13.10" -> "2.13")
+local function extract_scala_binary_version(scala_version)
+  -- Extraer x.y de x.y.z
+  local major, minor = scala_version:match("^(%d+)%.(%d+)")
+  if major and minor then
+    return major .. "." .. minor
+  end
+  return nil
+end
+
+-- Busca scalaVersion en el build.sbt
+local function find_scala_version(root, bufnr)
+  local scala_version_query = get_scala_version_query()
+
+  for id, node in scala_version_query:iter_captures(root, bufnr, 0, -1) do
+    local capture_name = scala_version_query.captures[id]
+
+    if capture_name == "scala_version_name" then
+      local name = vim.treesitter.get_node_text(node, bufnr)
+      if name == "scalaVersion" then
+        -- Buscar el valor en la siguiente captura
+        local next_id, next_node = scala_version_query:iter_captures(root, bufnr, 0, -1)()
+        if next_node then
+          local version = get_node_text_without_quotes(next_node, bufnr)
+          return extract_scala_binary_version(version)
+        end
+      end
+    elseif capture_name == "scala_version_value" then
+      -- Ya tenemos el valor, extraer la versión binaria
+      local version = get_node_text_without_quotes(node, bufnr)
+      if version then
+        return extract_scala_binary_version(version)
+      end
+    end
+  end
+
+  return nil
+end
+
 function M.extract_dependencies(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
 
@@ -332,6 +375,13 @@ function M.extract_dependencies(bufnr)
   local val_values = find_vals(root, bufnr)
 
   return find_dependencies(root, bufnr, val_values)
+end
+
+function M.get_scala_version(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+
+  local root = parse_tree(bufnr)
+  return find_scala_version(root, bufnr)
 end
 
 return M

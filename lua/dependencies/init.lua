@@ -42,9 +42,16 @@ function M.list_dependencies()
 end
 
 function M.list_dependencies_with_versions()
-  local deps = M.extract_dependencies(vim.api.nvim_get_current_buf())
+  local bufnr = vim.api.nvim_get_current_buf()
+  local deps = M.extract_dependencies(bufnr)
+  local scala_version = parser.get_scala_version(bufnr)
+
+  if scala_version then
+    print(string.format("Detectada versión de Scala: %s", scala_version))
+  end
+
   print("Consultando Maven Central para obtener últimas versiones...")
-  local deps_with_versions = maven.enrich_with_latest_versions(deps)
+  local deps_with_versions = maven.enrich_with_latest_versions(deps, scala_version)
   print_dependencies_with_versions(deps_with_versions)
   return deps_with_versions
 end

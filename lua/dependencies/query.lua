@@ -1,10 +1,11 @@
 local M = {}
 
 -- Lazy loading de queries - solo se parsean cuando se necesitan
-local _val_query = nil
-local _dep_query = nil
-local _single_dep_query = nil
-local _map_query = nil
+local _val_query
+local _dep_query
+local _single_dep_query
+local _map_query
+local _scala_version_query
 
 function M.get_val_query()
   if not _val_query then
@@ -113,6 +114,22 @@ function M.get_map_query()
     _map_query = query
   end
   return _map_query
+end
+
+function M.get_scala_version_query()
+  if not _scala_version_query then
+    local ok, query = pcall(vim.treesitter.query.parse, "scala", [[
+      (infix_expression
+        left: (identifier) @scala_version_name
+        operator: (operator_identifier)
+        right: (string) @scala_version_value)
+    ]])
+    if not ok then
+      error("Failed to parse scala_version_query. Make sure treesitter parser for Scala is installed: :TSInstall scala")
+    end
+    _scala_version_query = query
+  end
+  return _scala_version_query
 end
 
 -- Backward compatibility: mantener las propiedades antiguas

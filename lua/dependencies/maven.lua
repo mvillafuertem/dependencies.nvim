@@ -32,14 +32,32 @@ local function parse_dependency(dep_string)
 end
 
 -- Hacer request a Maven Central API para obtener la última versión
-local function fetch_latest_version(group_id, artifact_id)
+local function fetch_latest_version(group_id, artifact_id, scala_version)
+  -- Si tenemos scala_version, intentar primero con el sufijo
+  if scala_version then
+    local artifact_with_scala = artifact_id .. "_" .. scala_version
+    local url = string.format(
+      "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=1&wt=json",
+      group_id,
+      artifact_with_scala
+    )
+
+    local curl_cmd = string.format('curl -s "%s"', url)
+    local response = vim.fn.system(curl_cmd)
+    local success, json = pcall(vim.fn.json_decode, response)
+
+    if success and json.response and json.response.docs and #json.response.docs > 0 then
+      return json.response.docs[1].latestVersion or json.response.docs[1].v
+    end
+  end
+
+  -- Si no funcionó con scala_version o no la tenemos, intentar sin sufijo
   local url = string.format(
     "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=1&wt=json",
     group_id,
     artifact_id
   )
 
-  -- Usar vim.fn.system para hacer la request con curl
   local curl_cmd = string.format('curl -s "%s"', url)
   local response = vim.fn.system(curl_cmd)
 
@@ -58,7 +76,7 @@ local function fetch_latest_version(group_id, artifact_id)
 end
 
 -- Función principal que toma las dependencias y retorna con latest version
-function M.enrich_with_latest_versions(dependencies)
+function M.enrich_with_latest_versions(dependencies, scala_version)
   local result = {}
 
   for _, dep_info in ipairs(dependencies) do
@@ -66,7 +84,7 @@ function M.enrich_with_latest_versions(dependencies)
     local latest_version = nil
 
     if parsed then
-      latest_version, _ = fetch_latest_version(parsed.group_id, parsed.artifact_id)
+      latest_version, _ = fetch_latest_version(parsed.group_id, parsed.artifact_id, scala_version)
     end
 
     table.insert(result, {
@@ -80,9 +98,9 @@ function M.enrich_with_latest_versions(dependencies)
 end
 
 -- Función asíncrona para obtener versiones (para evitar bloquear el UI)
-function M.enrich_with_latest_versions_async(dependencies, callback)
+function M.enrich_with_latest_versions_async(dependencies, scala_version, callback)
   vim.schedule(function()
-    local result = M.enrich_with_latest_versions(dependencies)
+    local result = M.enrich_with_latest_versions(dependencies, scala_version)
     callback(result)
   end)
 end

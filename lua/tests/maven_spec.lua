@@ -253,6 +253,151 @@ test("preserves all fields from input dependencies", function()
   assert_equal(result[3].dependency, "org.example:artifact3:3.0.0", "Third dependency should be preserved")
 end)
 
+-- ============================================================================
+-- Test Scala version support (new feature)
+-- ============================================================================
+
+test("enrich_with_latest_versions with scala_version for Scala library", function()
+  -- g i v e n
+  local input_dependencies = {
+    { line = 1, dependency = "org.typelevel:cats-core:2.9.0" }
+  }
+  local scala_version = "2.13"
+
+  -- w h e n
+  local result = maven.enrich_with_latest_versions(input_dependencies, scala_version)
+
+  -- t h e n
+  assert_equal(#result, 1, "Should return one dependency")
+  assert_equal(result[1].line, 1, "Should have line 1")
+  assert_equal(result[1].dependency, "org.typelevel:cats-core:2.9.0", "Should preserve original dependency")
+  assert_equal(type(result[1].latest), "string", "Should have latest version")
+
+  if result[1].latest ~= "unknown" then
+    io.write(string.format("  ℹ️  Found latest version for cats-core_2.13: %s\n", result[1].latest))
+  else
+    io.write("  ⚠️  Warning: Could not fetch version from Maven Central\n")
+  end
+end)
+
+test("enrich_with_latest_versions with scala_version for Java library", function()
+  -- g i v e n
+  local input_dependencies = {
+    { line = 1, dependency = "com.typesafe:config:1.4.2" }
+  }
+  local scala_version = "2.13"
+
+  -- w h e n
+  local result = maven.enrich_with_latest_versions(input_dependencies, scala_version)
+
+  -- t h e n
+  assert_equal(#result, 1, "Should return one dependency")
+  assert_equal(result[1].line, 1, "Should have line 1")
+  assert_equal(result[1].dependency, "com.typesafe:config:1.4.2", "Should preserve original dependency")
+  assert_equal(type(result[1].latest), "string", "Should have latest version")
+
+  -- Java libraries don't have Scala version suffix, so it should fallback to plain artifact name
+  if result[1].latest ~= "unknown" then
+    io.write(string.format("  ℹ️  Found latest version for config (fallback): %s\n", result[1].latest))
+  else
+    io.write("  ⚠️  Warning: Could not fetch version from Maven Central\n")
+  end
+end)
+
+test("enrich_with_latest_versions with different scala versions", function()
+  -- g i v e n
+  local input_dependencies = {
+    { line = 1, dependency = "org.scalactic:scalactic:3.2.15" }
+  }
+
+  -- w h e n - Test with Scala 2.13
+  local result_2_13 = maven.enrich_with_latest_versions(input_dependencies, "2.13")
+
+  -- w h e n - Test with Scala 2.12
+  local result_2_12 = maven.enrich_with_latest_versions(input_dependencies, "2.12")
+
+  -- t h e n
+  assert_equal(#result_2_13, 1, "Should return one dependency for 2.13")
+  assert_equal(#result_2_12, 1, "Should return one dependency for 2.12")
+
+  if result_2_13[1].latest ~= "unknown" then
+    io.write(string.format("  ℹ️  Found latest version for scalactic_2.13: %s\n", result_2_13[1].latest))
+  end
+
+  if result_2_12[1].latest ~= "unknown" then
+    io.write(string.format("  ℹ️  Found latest version for scalactic_2.12: %s\n", result_2_12[1].latest))
+  end
+end)
+
+test("enrich_with_latest_versions without scala_version still works", function()
+  -- g i v e n
+  local input_dependencies = {
+    { line = 1, dependency = "org.typelevel:cats-core:2.9.0" },
+    { line = 2, dependency = "com.typesafe:config:1.4.2" }
+  }
+
+  -- w h e n - No scala_version provided (backward compatibility)
+  local result = maven.enrich_with_latest_versions(input_dependencies, nil)
+
+  -- t h e n
+  assert_equal(#result, 2, "Should return two dependencies")
+  assert_equal(result[1].line, 1, "First dependency should have line 1")
+  assert_equal(result[2].line, 2, "Second dependency should have line 2")
+  assert_equal(type(result[1].latest), "string", "First dependency should have latest version")
+  assert_equal(type(result[2].latest), "string", "Second dependency should have latest version")
+
+  io.write("  ℹ️  Backward compatibility: works without scala_version parameter\n")
+end)
+
+test("enrich_with_latest_versions with multiple Scala dependencies", function()
+  -- g i v e n
+  local input_dependencies = {
+    { line = 1, dependency = "org.typelevel:cats-core:2.9.0" },
+    { line = 2, dependency = "org.scalactic:scalactic:3.2.15" },
+    { line = 3, dependency = "com.typesafe:config:1.4.2" }
+  }
+  local scala_version = "2.13"
+
+  -- w h e n
+  local result = maven.enrich_with_latest_versions(input_dependencies, scala_version)
+
+  -- t h e n
+  assert_equal(#result, 3, "Should return three dependencies")
+
+  for i, dep in ipairs(result) do
+    assert_equal(dep.line, i, string.format("Dependency %d should have correct line number", i))
+    assert_equal(type(dep.dependency), "string", string.format("Dependency %d should have dependency string", i))
+    assert_equal(type(dep.latest), "string", string.format("Dependency %d should have latest version", i))
+
+    if dep.latest ~= "unknown" then
+      io.write(string.format("  ℹ️  %s (Scala %s) -> latest: %s\n", dep.dependency, scala_version, dep.latest))
+    end
+  end
+end)
+
+test("enrich_with_latest_versions handles Scala 3 version suffix", function()
+  -- g i v e n
+  local input_dependencies = {
+    { line = 1, dependency = "org.typelevel:cats-core:2.9.0" }
+  }
+  local scala_version = "3"
+
+  -- w h e n
+  local result = maven.enrich_with_latest_versions(input_dependencies, scala_version)
+
+  -- t h e n
+  assert_equal(#result, 1, "Should return one dependency")
+  assert_equal(result[1].line, 1, "Should have line 1")
+  assert_equal(type(result[1].latest), "string", "Should have latest version")
+
+  -- Note: Scala 3 uses _3 suffix
+  if result[1].latest ~= "unknown" then
+    io.write(string.format("  ℹ️  Found latest version for cats-core_3: %s\n", result[1].latest))
+  else
+    io.write("  ℹ️  Scala 3 suffix (_3) or fallback used\n")
+  end
+end)
+
 -- Print test summary
 helper.print_summary()
 
