@@ -100,8 +100,8 @@ function M.list_dependencies_with_versions(force)
               latest = cached_dep.latest  -- VERSIÓN DE CACHE
             }
             -- DEBUG
-            print(string.format("🔍 DEBUG: Merged - Line %d (was %d): %s -> %s",
-              merged_entry.line, cached_dep.line, dep_key, merged_entry.latest))
+            -- print(string.format("🔍 DEBUG: Merged - Line %d (was %d): %s -> %s",
+            --  merged_entry.line, cached_dep.line, dep_key, merged_entry.latest))
             table.insert(merged_data, merged_entry)
             found_in_cache = true
             break
@@ -123,11 +123,11 @@ function M.list_dependencies_with_versions(force)
       end
 
       -- DEBUG: Verificar merged_data antes de pasarlo a virtual_text
-      print("🔍 DEBUG: Final merged_data to be passed to apply_virtual_text:")
-      for i, dep in ipairs(merged_data) do
-        print(string.format("  %d) Line %d: %s:%s:%s -> %s",
-          i, dep.line, dep.group, dep.artifact, dep.version, dep.latest))
-      end
+      -- print("🔍 DEBUG: Final merged_data to be passed to apply_virtual_text:")
+      -- for i, dep in ipairs(merged_data) do
+      --   print(string.format("  %d) Line %d: %s:%s:%s -> %s",
+      --     i, dep.line, dep.group, dep.artifact, dep.version, dep.latest))
+      -- end
 
       -- Solo aplicar virtual text si NO estamos en modo inserción
       local mode = vim.api.nvim_get_mode().mode
