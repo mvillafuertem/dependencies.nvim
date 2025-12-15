@@ -45,7 +45,7 @@ test("apply_virtual_text with single dependency creates one extmark", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
   }
 
   -- w h e n
@@ -59,7 +59,7 @@ test("apply_virtual_text creates extmark with correct content", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
   }
 
   -- w h e n
@@ -80,7 +80,7 @@ test("apply_virtual_text creates extmark with correct highlight group", function
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
   }
 
   -- w h e n
@@ -99,7 +99,7 @@ test("apply_virtual_text does NOT create extmark when current equals latest", fu
   virtual_text.clear(bufnr)  -- Ensure clean state
 
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.5", current = "1.4.5", latest = "1.4.5" }
+    { line = 1, dependency = "com.typesafe:config:1.4.5", version = "1.4.5", latest = "1.4.5" }
   }
 
   -- w h e n
@@ -117,7 +117,7 @@ test("apply_virtual_text creates extmark at end of line", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
   }
 
   -- w h e n
@@ -134,7 +134,7 @@ test("apply_virtual_text places extmark on correct line", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("line1\nline2\nline3\nline4\nline5")
   local deps_with_versions = {
-    { line = 5, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" }
+    { line = 5, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
   }
 
   -- w h e n
@@ -155,9 +155,9 @@ test("apply_virtual_text with multiple dependencies creates multiple extmarks", 
   -- g i v e n
   local bufnr = setup_buffer_with_content("line1\nline2\nline3")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" },
-    { line = 2, dependency = "org.scala-lang:scala-library:2.13.10", current = "2.13.10", latest = "2.13.12" },
-    { line = 3, dependency = "io.circe:circe-core:0.14.1", current = "0.14.1", latest = "0.14.15" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },
+    { line = 2, dependency = "org.scala-lang:scala-library:2.13.10", version = "2.13.10", latest = "2.13.12" },
+    { line = 3, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1", latest = "0.14.15" }
   }
 
   -- w h e n
@@ -174,8 +174,8 @@ test("apply_virtual_text creates correct content for each dependency", function(
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" },
-    { line = 2, dependency = "io.circe:circe-core:0.14.1", current = "0.14.1", latest = "0.14.15" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },
+    { line = 2, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1", latest = "0.14.15" }
   }
 
   -- w h e n
@@ -197,8 +197,8 @@ test("apply_virtual_text places extmarks on correct lines for multiple dependenc
   -- g i v e n
   local bufnr = setup_buffer_with_content("line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\nline9\nline10")
   local deps_with_versions = {
-    { line = 5, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" },
-    { line = 10, dependency = "io.circe:circe-core:0.14.1", current = "0.14.1", latest = "0.14.15" }
+    { line = 5, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },
+    { line = 10, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1", latest = "0.14.15" }
   }
 
   -- w h e n
@@ -219,8 +219,8 @@ test("apply_virtual_text skips dependencies with nil latest version", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" },
-    { line = 2, dependency = "com.example:artifact:1.0.0", current = "1.0.0", latest = nil },
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },
+    { line = 2, dependency = "com.example:artifact:1.0.0", version = "1.0.0", latest = nil },
   }
 
   -- w h e n
@@ -237,9 +237,9 @@ test("apply_virtual_text skips dependencies with 'unknown' version", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("line1\nline2\nline3")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" },
-    { line = 2, dependency = "com.nonexistent:artifact:1.0.0", current = "1.0.0", latest = "unknown" },
-    { line = 3, dependency = "io.circe:circe-core:0.14.1", current = "0.14.1", latest = "0.14.15" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },
+    { line = 2, dependency = "com.nonexistent:artifact:1.0.0", version = "1.0.0", latest = "unknown" },
+    { line = 3, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1", latest = "0.14.15" }
   }
 
   -- w h e n
@@ -279,7 +279,7 @@ test("get_extmarks without details flag returns basic info", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
   }
   virtual_text.apply_virtual_text(bufnr, deps_with_versions)
 
@@ -296,7 +296,7 @@ test("get_extmarks with details flag returns full details", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
   }
   virtual_text.apply_virtual_text(bufnr, deps_with_versions)
 
@@ -319,8 +319,8 @@ test("clear removes all extmarks from buffer", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" },
-    { line = 2, dependency = "io.circe:circe-core:0.14.1", current = "0.14.1", latest = "0.14.15" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },
+    { line = 2, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1", latest = "0.14.15" }
   }
   virtual_text.apply_virtual_text(bufnr, deps_with_versions)
 
@@ -355,8 +355,8 @@ test("clear and reapply creates same number of extmarks", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" },
-    { line = 2, dependency = "io.circe:circe-core:0.14.1", current = "0.14.1", latest = "0.14.15" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },
+    { line = 2, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1", latest = "0.14.15" }
   }
 
   -- First application
@@ -377,7 +377,7 @@ test("clear and reapply creates extmarks with same content", function()
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
-    { line = 1, dependency = "com.typesafe:config:1.4.0", current = "1.4.0", latest = "1.4.5" }
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
   }
 
   -- First application
@@ -520,6 +520,346 @@ libraryDependencies ++= Seq(
     -- Should be on line 4 (the dependency line, 0-indexed: 3)
     assert_equal(extmarks[1][2], 3, "Should be on line 4 (0-indexed: 3)")
   end
+end)
+
+-- ============================================================================
+-- LEVEL 8: Multiple Versions Display (include_prerelease feature)
+-- ============================================================================
+
+test("apply_virtual_text with multiple versions (table) displays comma-separated list", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content("")
+  local deps_with_versions = {
+    { line = 1, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1",
+      latest = {"0.14.15", "0.14.0-M7", "0.15.0-M1"} }
+  }
+
+  -- w h e n
+  local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  assert_equal(count, 1, "Should create exactly one extmark")
+
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  local virt_text_content = extmarks[1][4].virt_text[1][1]
+
+  -- Verify comma-separated format
+  assert_equal(virt_text_content, "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1",
+               "Should display all versions separated by commas")
+end)
+
+test("apply_virtual_text with multiple versions creates extmark when at least one differs", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content("")
+  local deps_with_versions = {
+    { line = 1, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1",
+      latest = {"0.14.1", "0.14.15", "0.15.0-M1"} }  -- First matches current, but others differ
+  }
+
+  -- w h e n
+  local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  assert_equal(count, 1, "Should create extmark when at least one version differs from current")
+
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  local virt_text_content = extmarks[1][4].virt_text[1][1]
+  assert_equal(virt_text_content, "  ← latest: 0.14.1, 0.14.15, 0.15.0-M1",
+               "Should display all versions even if one matches current")
+end)
+
+test("apply_virtual_text with multiple versions does NOT create extmark when all equal current", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content("")
+  virtual_text.clear(bufnr)  -- Ensure clean state
+
+  local deps_with_versions = {
+    { line = 1, dependency = "io.circe:circe-core:0.14.15", version = "0.14.15",
+      latest = {"0.14.15", "0.14.15", "0.14.15"} }  -- All versions match current
+  }
+
+  -- w h e n
+  local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  assert_equal(count, 0, "Should NOT create extmark when all versions equal current")
+
+  local extmarks = virtual_text.get_extmarks(bufnr, false)
+  assert_equal(#extmarks, 0, "Buffer should have zero extmarks")
+end)
+
+test("apply_virtual_text with empty version table does NOT create extmark", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content("")
+  virtual_text.clear(bufnr)
+
+  local deps_with_versions = {
+    { line = 1, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1", latest = {} }
+  }
+
+  -- w h e n
+  local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  assert_equal(count, 0, "Should NOT create extmark for empty version table")
+
+  local extmarks = virtual_text.get_extmarks(bufnr, false)
+  assert_equal(#extmarks, 0, "Buffer should have zero extmarks")
+end)
+
+test("apply_virtual_text with mixed single and multiple version formats", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content("line1\nline2\nline3")
+  local deps_with_versions = {
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },  -- Single version
+    { line = 2, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1",
+      latest = {"0.14.15", "0.14.0-M7", "0.15.0-M1"} },  -- Multiple versions
+    { line = 3, dependency = "org.typelevel:cats-core:2.9.0", version = "2.9.0", latest = "2.13.0" }  -- Single version
+  }
+
+  -- w h e n
+  local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  assert_equal(count, 3, "Should create three extmarks")
+
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  assert_equal(#extmarks, 3, "Should have three extmarks")
+
+  -- Verify first extmark (single version)
+  assert_equal(extmarks[1][4].virt_text[1][1], "  ← latest: 1.4.5",
+               "First extmark should show single version")
+
+  -- Verify second extmark (multiple versions)
+  assert_equal(extmarks[2][4].virt_text[1][1], "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1",
+               "Second extmark should show multiple versions")
+
+  -- Verify third extmark (single version)
+  assert_equal(extmarks[3][4].virt_text[1][1], "  ← latest: 2.13.0",
+               "Third extmark should show single version")
+end)
+
+test("apply_virtual_text with multiple versions handles pre-release versions correctly", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content("")
+  local deps_with_versions = {
+    { line = 1, dependency = "org.typelevel:cats-core:2.9.0", version = "2.9.0",
+      latest = {"2.13.0", "2.3.0-M1", "2.3.0-M2"} }  -- Stable + 2 pre-releases
+  }
+
+  -- w h e n
+  local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  assert_equal(count, 1, "Should create one extmark")
+
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  local virt_text_content = extmarks[1][4].virt_text[1][1]
+
+  -- Verify format includes all 3 versions
+  assert_equal(virt_text_content, "  ← latest: 2.13.0, 2.3.0-M1, 2.3.0-M2",
+               "Should display stable version first, then pre-releases")
+end)
+
+test("apply_virtual_text with multiple versions on different lines", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content("line1\nline2\nline3\nline4\nline5")
+  local deps_with_versions = {
+    { line = 2, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1",
+      latest = {"0.14.15", "0.14.0-M7", "0.15.0-M1"} },
+    { line = 5, dependency = "org.typelevel:cats-core:2.9.0", version = "2.9.0",
+      latest = {"2.13.0", "2.3.0-M1", "2.3.0-M2"} }
+  }
+
+  -- w h e n
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  assert_equal(#extmarks, 2, "Should have two extmarks")
+
+  -- Verify line numbers (0-indexed)
+  assert_equal(extmarks[1][2], 1, "First extmark should be on line 2 (0-indexed: 1)")
+  assert_equal(extmarks[2][2], 4, "Second extmark should be on line 5 (0-indexed: 4)")
+
+  -- Verify content
+  assert_equal(extmarks[1][4].virt_text[1][1], "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1",
+               "First extmark should show circe versions")
+  assert_equal(extmarks[2][4].virt_text[1][1], "  ← latest: 2.13.0, 2.3.0-M1, 2.3.0-M2",
+               "Second extmark should show cats versions")
+end)
+
+test("clear and reapply with multiple versions preserves content", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content("")
+  local deps_with_versions = {
+    { line = 1, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1",
+      latest = {"0.14.15", "0.14.0-M7", "0.15.0-M1"} }
+  }
+
+  -- First application
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+  local first_content = virtual_text.get_extmarks(bufnr, true)[1][4].virt_text[1][1]
+
+  -- w h e n - Clear and reapply
+  virtual_text.clear(bufnr)
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  local second_content = virtual_text.get_extmarks(bufnr, true)[1][4].virt_text[1][1]
+  assert_equal(second_content, first_content, "Content should be identical after reapply")
+  assert_equal(second_content, "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1",
+               "Content should show all three versions")
+end)
+
+test("apply_virtual_text with multiple versions skips when mixed with unknown", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content("line1\nline2\nline3")
+  local deps_with_versions = {
+    { line = 1, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1",
+      latest = {"0.14.15", "0.14.0-M7", "0.15.0-M1"} },  -- Multiple versions (valid)
+    { line = 2, dependency = "com.example:unknown:1.0.0", version = "1.0.0", latest = "unknown" },  -- Unknown (skip)
+    { line = 3, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }  -- Single version (valid)
+  }
+
+  -- w h e n
+  local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  assert_equal(count, 2, "Should create two extmarks (skipping unknown)")
+
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  assert_equal(#extmarks, 2, "Should have two extmarks")
+
+  -- Verify correct dependencies were displayed
+  assert_equal(extmarks[1][4].virt_text[1][1], "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1",
+               "First extmark should show multiple versions")
+  assert_equal(extmarks[2][4].virt_text[1][1], "  ← latest: 1.4.5",
+               "Second extmark should show single version")
+end)
+
+-- ============================================================================
+-- LEVEL 9: Custom Configuration Tests
+-- ============================================================================
+
+test("apply_virtual_text respects custom virtual_text_prefix configuration", function()
+  -- g i v e n
+  local config = require('dependencies.config')
+
+  -- Save original prefix
+  local original_prefix = config.get().virtual_text_prefix
+
+  -- Configure custom prefix
+  config.setup({ virtual_text_prefix = "  🔄 new version: " })
+
+  local bufnr = setup_buffer_with_content("")
+  local deps_with_versions = {
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
+  }
+
+  -- w h e n
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  assert_equal(#extmarks, 1, "Should create one extmark")
+
+  local virt_text_content = extmarks[1][4].virt_text[1][1]
+  assert_equal(virt_text_content, "  🔄 new version: 1.4.5",
+               "Should use custom prefix from configuration")
+
+  -- Restore original configuration
+  config.setup({ virtual_text_prefix = original_prefix })
+end)
+
+test("apply_virtual_text with custom prefix and multiple versions", function()
+  -- g i v e n
+  local config = require('dependencies.config')
+  local original_prefix = config.get().virtual_text_prefix
+
+  -- Configure custom prefix with arrow
+  config.setup({ virtual_text_prefix = " >> " })
+
+  local bufnr = setup_buffer_with_content("")
+  local deps_with_versions = {
+    { line = 1, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1",
+      latest = {"0.14.15", "0.14.0-M7", "0.15.0-M1"} }
+  }
+
+  -- w h e n
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  local virt_text_content = extmarks[1][4].virt_text[1][1]
+
+  assert_equal(virt_text_content, " >> 0.14.15, 0.14.0-M7, 0.15.0-M1",
+               "Should use custom prefix with multiple versions")
+
+  -- Restore original configuration
+  config.setup({ virtual_text_prefix = original_prefix })
+end)
+
+test("apply_virtual_text with empty prefix configuration", function()
+  -- g i v e n
+  local config = require('dependencies.config')
+  local original_prefix = config.get().virtual_text_prefix
+
+  -- Configure empty prefix
+  config.setup({ virtual_text_prefix = "" })
+
+  local bufnr = setup_buffer_with_content("")
+  local deps_with_versions = {
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" }
+  }
+
+  -- w h e n
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  local virt_text_content = extmarks[1][4].virt_text[1][1]
+
+  assert_equal(virt_text_content, "1.4.5",
+               "Should display version without prefix when prefix is empty")
+
+  -- Restore original configuration
+  config.setup({ virtual_text_prefix = original_prefix })
+end)
+
+test("apply_virtual_text with multiple dependencies and custom prefix", function()
+  -- g i v e n
+  local config = require('dependencies.config')
+  local original_prefix = config.get().virtual_text_prefix
+
+  -- Configure custom prefix
+  config.setup({ virtual_text_prefix = " ➜ " })
+
+  local bufnr = setup_buffer_with_content("line1\nline2\nline3")
+  local deps_with_versions = {
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },
+    { line = 2, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1",
+      latest = {"0.14.15", "0.14.0-M7", "0.15.0-M1"} },
+    { line = 3, dependency = "org.typelevel:cats-core:2.9.0", version = "2.9.0", latest = "2.13.0" }
+  }
+
+  -- w h e n
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  assert_equal(#extmarks, 3, "Should create three extmarks")
+
+  -- Verify all use custom prefix
+  assert_equal(extmarks[1][4].virt_text[1][1], " ➜ 1.4.5",
+               "First extmark should use custom prefix")
+  assert_equal(extmarks[2][4].virt_text[1][1], " ➜ 0.14.15, 0.14.0-M7, 0.15.0-M1",
+               "Second extmark should use custom prefix with multiple versions")
+  assert_equal(extmarks[3][4].virt_text[1][1], " ➜ 2.13.0",
+               "Third extmark should use custom prefix")
+
+  -- Restore original configuration
+  config.setup({ virtual_text_prefix = original_prefix })
 end)
 
 -- Print test summary

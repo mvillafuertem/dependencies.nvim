@@ -86,15 +86,18 @@ local function resolve_version(version_text, val_values)
   return val_values[version_text] or version_text
 end
 
-local function create_dependency_string(org, artifact, version)
+local function create_dependency_key(org, artifact, version)
   return org .. ":" .. artifact .. ":" .. version
 end
 
-local function add_dependency_if_new(dep, line, dependencies, seen)
-  if not seen[dep] then
-    seen[dep] = true
+local function add_dependency_if_new(org, artifact, version, line, dependencies, seen)
+  local key = create_dependency_key(org, artifact, version)
+  if not seen[key] then
+    seen[key] = true
     table.insert(dependencies, {
-      dependency = dep,
+      group = org,
+      artifact = artifact,
+      version = version,
       line = line
     })
   end
@@ -105,8 +108,7 @@ local function save_current_match(current_match, last_line, val_values, dependen
   if not has_complete_dependency(current_match) then return end
 
   local version = resolve_version(current_match.version_text, val_values)
-  local dep = create_dependency_string(current_match.org, current_match.artifact, version)
-  add_dependency_if_new(dep, last_line, dependencies, seen)
+  add_dependency_if_new(current_match.org, current_match.artifact, version, last_line, dependencies, seen)
 end
 
 local function should_save_previous_match(last_line, current_line, match_data)
@@ -173,9 +175,8 @@ local function process_seq_arg(arg, bufnr, version, dependencies, seen)
   local org, artifact = extract_org_and_artifact(arg, bufnr)
   if not org or not artifact then return end
 
-  local dep = create_dependency_string(org, artifact, version)
   local line_num = arg:range() + 1
-  add_dependency_if_new(dep, line_num, dependencies, seen)
+  add_dependency_if_new(org, artifact, version, line_num, dependencies, seen)
 end
 
 local function process_seq_children(seq_args, bufnr, version, dependencies, seen)
@@ -304,9 +305,8 @@ local function collect_single_dependencies(root, bufnr, val_values, dependencies
       if current_match.lib_dep_name and current_match.plus_eq and
          current_match.org and current_match.artifact and current_match.version_text and current_match.dep_node then
         local version = resolve_version(current_match.version_text, val_values)
-        local dep = create_dependency_string(current_match.org, current_match.artifact, version)
         local line_num = current_match.dep_node:range() + 1
-        add_dependency_if_new(dep, line_num, dependencies, seen)
+        add_dependency_if_new(current_match.org, current_match.artifact, version, line_num, dependencies, seen)
       end
       current_match = {}
     end

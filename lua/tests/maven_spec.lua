@@ -12,6 +12,22 @@ local test = helper.test
 -- Reset test counters at the start
 helper.reset_counters()
 
+-- Synchronous wrapper for testing async function
+local function enrich_with_latest_versions_sync(dependencies, scala_version)
+  local result = nil
+  local done = false
+
+  maven.enrich_with_latest_versions_async(dependencies, scala_version, function(enriched)
+    result = enriched
+    done = true
+  end)
+
+  -- Wait for async operation to complete
+  vim.wait(10000, function() return done end, 100)
+
+  return result or {}
+end
+
 io.write("=== Maven Integration Tests ===\n")
 io.flush()
 
@@ -22,24 +38,26 @@ io.flush()
 test("enrich_with_latest_versions returns correct format", function()
   -- g i v e n
   local input_dependencies = {
-    { line = 1, dependency = "io.circe:circe-core:0.14.1" },
-    { line = 2, dependency = "com.typesafe:config:1.4.2" }
+    { group = "io.circe", artifact = "circe-core", version = "0.14.1", line = 1 },
+    { group = "com.typesafe", artifact = "config", version = "1.4.2", line = 2 }
   }
 
   -- w h e n
-  local result = maven.enrich_with_latest_versions(input_dependencies)
+  local result = enrich_with_latest_versions_sync(input_dependencies)
 
   -- t h e n
   assert_equal(#result, 2, "Should return same number of dependencies")
 
   -- Check structure of first result
   assert_equal(result[1].line, 1, "First dependency should have line 1")
-  assert_equal(result[1].dependency, "io.circe:circe-core:0.14.1", "First dependency string should match")
+  assert_equal(result[1].group, "io.circe", "First dependency group should match")
+  assert_equal(result[1].artifact, "circe-core", "First dependency artifact should match")
   assert_equal(type(result[1].latest), "string", "First dependency should have latest as string")
 
   -- Check structure of second result
   assert_equal(result[2].line, 2, "Second dependency should have line 2")
-  assert_equal(result[2].dependency, "com.typesafe:config:1.4.2", "Second dependency string should match")
+  assert_equal(result[2].group, "com.typesafe", "Second dependency group should match")
+  assert_equal(result[2].artifact, "config", "Second dependency artifact should match")
   assert_equal(type(result[2].latest), "string", "Second dependency should have latest as string")
 end)
 
@@ -48,7 +66,7 @@ test("enrich_with_latest_versions handles empty input", function()
   local input_dependencies = {}
 
   -- w h e n
-  local result = maven.enrich_with_latest_versions(input_dependencies)
+  local result = enrich_with_latest_versions_sync(input_dependencies)
 
   -- t h e n
   assert_equal(#result, 0, "Should return empty array for empty input")
@@ -57,16 +75,17 @@ end)
 test("enrich_with_latest_versions handles single dependency", function()
   -- g i v e n
   local input_dependencies = {
-    { line = 5, dependency = "org.scala-lang:scala-library:2.13.10" }
+    { group = "org.scala-lang", artifact = "scala-library", version = "2.13.10", line = 5 }
   }
 
   -- w h e n
-  local result = maven.enrich_with_latest_versions(input_dependencies)
+  local result = enrich_with_latest_versions_sync(input_dependencies)
 
   -- t h e n
   assert_equal(#result, 1, "Should return one dependency")
   assert_equal(result[1].line, 5, "Should preserve line number")
-  assert_equal(result[1].dependency, "org.scala-lang:scala-library:2.13.10", "Should preserve dependency string")
+  assert_equal(result[1].group, "org.scala-lang", "Should preserve group")
+  assert_equal(result[1].artifact, "scala-library", "Should preserve artifact")
   assert_equal(type(result[1].latest), "string", "Should have latest version as string")
 end)
 
@@ -77,16 +96,18 @@ end)
 test("fetch latest version for known Scala library", function()
   -- g i v e n
   local input_dependencies = {
-    { line = 1, dependency = "org.scala-lang:scala-library:2.13.10" }
+    { group = "org.scala-lang", artifact = "scala-library", version = "2.13.10", line = 1 }
   }
 
   -- w h e n
-  local result = maven.enrich_with_latest_versions(input_dependencies)
+  local result = enrich_with_latest_versions_sync(input_dependencies)
 
   -- t h e n
   assert_equal(#result, 1, "Should return one dependency")
   assert_equal(result[1].line, 1, "Should have line 1")
-  assert_equal(result[1].dependency, "org.scala-lang:scala-library:2.13.10", "Should preserve original dependency")
+  assert_equal(result[1].group, "org.scala-lang", "Should preserve group")
+  assert_equal(result[1].artifact, "scala-library", "Should preserve artifact")
+  assert_equal(result[1].version, "2.13.10", "Should preserve version")
 
   -- The latest version should not be "unknown" if Maven Central is accessible
   -- Note: This test might fail if Maven Central is down or network issues occur
@@ -100,16 +121,18 @@ end)
 test("fetch latest version for Typesafe Config", function()
   -- g i v e n
   local input_dependencies = {
-    { line = 1, dependency = "com.typesafe:config:1.4.2" }
+    { group = "com.typesafe", artifact = "config", version = "1.4.2", line = 1 }
   }
 
   -- w h e n
-  local result = maven.enrich_with_latest_versions(input_dependencies)
+  local result = enrich_with_latest_versions_sync(input_dependencies)
 
   -- t h e n
   assert_equal(#result, 1, "Should return one dependency")
   assert_equal(result[1].line, 1, "Should have line 1")
-  assert_equal(result[1].dependency, "com.typesafe:config:1.4.2", "Should preserve original dependency")
+  assert_equal(result[1].group, "com.typesafe", "Should preserve group")
+  assert_equal(result[1].artifact, "config", "Should preserve artifact")
+  assert_equal(result[1].version, "1.4.2", "Should preserve version")
 
   if result[1].latest ~= "unknown" then
     io.write(string.format("  ℹ️  Found latest version: %s\n", result[1].latest))
@@ -121,24 +144,25 @@ end)
 test("fetch latest versions for multiple dependencies", function()
   -- g i v e n
   local input_dependencies = {
-    { line = 1, dependency = "io.circe:circe-core:0.14.1" },
-    { line = 2, dependency = "com.typesafe:config:1.4.2" },
-    { line = 3, dependency = "org.scala-lang:scala-library:2.13.10" }
+    { group = "io.circe", artifact = "circe-core", version = "0.14.1", line = 1 },
+    { group = "com.typesafe", artifact = "config", version = "1.4.2", line = 2 },
+    { group = "org.scala-lang", artifact = "scala-library", version = "2.13.10", line = 3 }
   }
 
   -- w h e n
-  local result = maven.enrich_with_latest_versions(input_dependencies)
+  local result = enrich_with_latest_versions_sync(input_dependencies)
 
   -- t h e n
   assert_equal(#result, 3, "Should return three dependencies")
 
   for i, dep in ipairs(result) do
     assert_equal(dep.line, i, string.format("Dependency %d should have correct line number", i))
-    assert_equal(type(dep.dependency), "string", string.format("Dependency %d should have dependency string", i))
+    assert_equal(type(dep.group), "string", string.format("Dependency %d should have group string", i))
+    assert_equal(type(dep.artifact), "string", string.format("Dependency %d should have artifact string", i))
     assert_equal(type(dep.latest), "string", string.format("Dependency %d should have latest version", i))
 
     if dep.latest ~= "unknown" then
-      io.write(string.format("  ℹ️  %s -> latest: %s\n", dep.dependency, dep.latest))
+      io.write(string.format("  ℹ️  %s:%s:%s -> latest: %s\n", dep.group, dep.artifact, dep.version, dep.latest))
     end
   end
 end)

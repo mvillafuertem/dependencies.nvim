@@ -1,0 +1,82 @@
+-- Configuración del plugin dependencies.nvim
+local M = {}
+
+-- Opciones por defecto
+local defaults = {
+  -- Patrones de archivos donde buscar dependencias
+  -- Soporta patrones glob de Neovim
+  patterns = {
+    "build.sbt",           -- SBT (Scala Build Tool)
+    -- Ejemplos de otros patrones que el usuario puede añadir:
+    -- "*.sc",              -- Mill build tool
+    -- "Dependencies.scala", -- Archivos de dependencias separados
+    -- "project/*.scala",   -- Archivos en directorio project/
+  },
+
+  -- Incluir versiones pre-release (alpha, beta, milestone, RC, SNAPSHOT)
+  -- false = solo versiones estables (default)
+  -- true = incluir también pre-releases
+  include_prerelease = false,
+
+  -- Prefijo del virtual text que muestra la última versión
+  -- Se mostrará al final de la línea cuando haya una versión más reciente
+  virtual_text_prefix = "  ← latest: ",
+
+
+  -- Auto-ejecutar al abrir archivos que coincidan con patterns
+  auto_check_on_open = true,
+
+  -- Duración del caché para resultados de Maven Central
+  -- Formatos soportados:
+  --   "30m" = 30 minutos
+  --   "6h"  = 6 horas
+  --   "1d"  = 1 día (default)
+  --   "1w"  = 1 semana
+  --   "1M"  = 1 mes (30 días)
+  cache_ttl = "1d",
+}
+
+-- Configuración actual (se inicializa con defaults)
+M.options = vim.deepcopy(defaults)
+
+-- Función para inicializar/actualizar la configuración
+-- @param user_config tabla con opciones del usuario (opcional)
+function M.setup(user_config)
+  user_config = user_config or {}
+
+  -- Merge de configuración: defaults + user_config
+  M.options = vim.tbl_deep_extend("force", defaults, user_config)
+
+  -- Validación: patterns debe ser una tabla
+  if type(M.options.patterns) ~= "table" then
+    vim.notify(
+      "dependencies.nvim: 'patterns' debe ser una tabla/lista",
+      vim.log.levels.ERROR
+    )
+    M.options.patterns = defaults.patterns
+  end
+
+  -- Validación: patterns no debe estar vacía
+  if #M.options.patterns == 0 then
+    vim.notify(
+      "dependencies.nvim: 'patterns' no puede estar vacía, usando default",
+      vim.log.levels.WARN
+    )
+    M.options.patterns = defaults.patterns
+  end
+
+  return M.options
+end
+
+-- Función helper para obtener la configuración actual
+function M.get()
+  return M.options
+end
+
+-- Función helper para obtener los patrones configurados
+function M.get_patterns()
+  return M.options.patterns
+end
+
+return M
+
