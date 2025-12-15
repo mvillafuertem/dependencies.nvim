@@ -76,10 +76,10 @@ function M.list_dependencies_with_versions(force)
       local current_deps = M.extract_dependencies(bufnr)
 
       -- DEBUG
-      print("🔍 DEBUG: Re-parsed dependencies after potential edit:")
-      for _, dep in ipairs(current_deps) do
-        print(string.format("  Line %d: %s:%s:%s", dep.line, dep.group, dep.artifact, dep.version))
-      end
+      -- print("🔍 DEBUG: Re-parsed dependencies after potential edit:")
+      -- for _, dep in ipairs(current_deps) do
+      --   print(string.format("  Line %d: %s:%s:%s", dep.line, dep.group, dep.artifact, dep.version))
+      -- end
 
       -- Merge: actualizar líneas pero mantener versiones de cache
       local merged_data = {}
