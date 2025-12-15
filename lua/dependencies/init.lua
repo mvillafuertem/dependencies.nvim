@@ -70,7 +70,7 @@ function M.list_dependencies_with_versions(force)
     local cached_data = cache.get(bufnr)
     if cached_data then
       print("📦 Usando caché (válido por " .. opts.cache_ttl .. ")")
-      print_dependencies_with_versions(cached_data)
+      -- print_dependencies_with_versions(cached_data)
       virtual_text.apply_virtual_text(bufnr, cached_data)
       return cached_data
     end
@@ -98,7 +98,7 @@ function M.list_dependencies_with_versions(force)
 
   -- Usar versión asíncrona para evitar bloquear el UI
   maven.enrich_with_latest_versions_async(deps, scala_version, function(deps_with_versions)
-    print_dependencies_with_versions(deps_with_versions)
+    -- print_dependencies_with_versions(deps_with_versions)
 
     -- Guardar en caché
     cache.set(bufnr, deps_with_versions)
