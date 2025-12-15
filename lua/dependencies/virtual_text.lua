@@ -29,6 +29,9 @@ end
 --- @param deps_with_versions table Array of {line, dependency, current, latest}
 --- @return number Number of extmarks created
 function M.apply_virtual_text(bufnr, deps_with_versions)
+  -- Limpiar extmarks anteriores para evitar duplicados
+  M.clear(bufnr)
+
   local extmarks_created = 0
 
   for _, dep_info in ipairs(deps_with_versions) do
@@ -37,18 +40,18 @@ function M.apply_virtual_text(bufnr, deps_with_versions)
     local should_show = false
 
     if type(dep_info.latest) == "table" then
-      -- Múltiples versiones: mostrar si la tabla no está vacía
+      -- Múltiples versiones: filtrar las que son diferentes a la actual
       if #dep_info.latest > 0 then
-        -- Verificar si alguna versión es diferente a la actual
+        local different_versions = {}
         for _, version in ipairs(dep_info.latest) do
           if version ~= dep_info.version then
-            should_show = true
-            break
+            table.insert(different_versions, version)
           end
         end
-        if should_show then
-          -- Unir todas las versiones con comas
-          latest_display = table.concat(dep_info.latest, ", ")
+        -- Mostrar solo si hay versiones diferentes
+        if #different_versions > 0 then
+          should_show = true
+          latest_display = table.concat(different_versions, ", ")
         end
       end
     else

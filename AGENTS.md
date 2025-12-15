@@ -6,8 +6,8 @@
 **Repository:** https://github.com/mvillafuertem/dependencies.nvim
 **Purpose:** A Neovim plugin for Scala/SBT projects that automatically detects dependencies in `build.sbt` files and shows the latest available versions from Maven Central.
 **Language:** Lua (Neovim plugin)
-**Last Updated:** 2025-12-13
-**Total Lines of Code:** ~4,071 lines (1,483 core + 2,588 tests)
+**Last Updated:** 2025-12-15
+**Total Lines of Code:** ~3,955 lines (1,468 core + 2,487 tests)
 
 ### What This Plugin Does
 
@@ -763,10 +763,11 @@ The plugin provides automatic updates with intelligent caching:
 #### Cache Behavior
 
 - **TTL (Time-To-Live)**: Configurable, default is 1 day (`"1d"`)
-- **Storage**: In-memory, cleared on Neovim restart
-- **Per-buffer**: Each file has independent cache
-- **Smart invalidation**: Cache respected unless forced refresh
-- **Performance**: First open queries API, subsequent opens use cache (instant load)
+- **Storage**: Persistent file-based in `~/.cache/nvim/dependencies/` (survives Neovim restarts)
+- **Per-project**: Each project directory has independent cache file based on path hash
+- **Smart invalidation**: Cache respected unless forced refresh or TTL expired
+- **Performance**: First open queries API, subsequent opens use cache (instant load from disk)
+- **XDG Compliant**: Follows XDG Base Directory specification for cache storage
 
 #### Virtual Text Display
 
@@ -1039,7 +1040,98 @@ nvim your-project/build.sbt
 
 ## Changelog Summary
 
-### 2025-12-14 (Latest)
+### 2025-12-15 (Latest)
+- ✅ **Cache Merge "Unknown" Version Fix**: Fixed confusing "unknown" display for dependencies not in cache
+  - **Problem**: When a dependency wasn't found in cache (e.g., newly added), it showed `latest = "unknown"` which confused users
+  - **User Feedback**: "aparecen unknown cuando ya estas en la ultima version, pero no quiero ese comportamiento ya que es confuso, si la ultima version es 1.0 -> 1.0 asi deberia mostrarse"
+  - **Solution**: Show current version as latest when not in cache (e.g., `1.0 -> 1.0`)
+  - **Changes**:
+    - `init.lua` lines 115-124: Changed `latest = "unknown"` to `latest = current_dep.version`
+    - Comment updated to clarify behavior: "Mostrar versión actual en lugar de 'unknown'"
+  - **Behavior**:
+    - New dependencies show no virtual text (current == latest, so no update needed)
+    - Next cache refresh queries Maven and updates with real latest version
+    - No confusing "unknown" text displayed to user
+  - **Impact**: Cleaner user experience, no confusing "unknown" status for dependencies
+
+- ✅ **Virtual Text Refresh Bug Fix**: Fixed critical bug where virtual text positions were not updating after buffer edits and save
+  - **Problem**: When user edits buffer (adds/removes lines) and saves with `:w`, virtual text appeared on wrong lines (stale cached positions)
+  - **Example**:
+    - Initial state: Dependencies at lines 2 and 3, virtual text displays correctly
+    - User adds blank line at top: Dependencies shift to lines 3 and 4
+    - User saves: Virtual text still appeared at lines 2 and 3 (WRONG!)
+  - **Root Cause**: Installed plugin at `~/.local/share/nvim/lazy/dependencies.nvim/` was outdated, passing `cached_data` directly to `apply_virtual_text()` instead of merging with re-parsed line numbers
+  - **Solution**: Cache hit path now re-parses dependencies to get current line numbers, then merges with cached version data
+  - **Changes**:
+    - `init.lua` lines 74-130: Added complete cache merge logic
+    - Re-parses buffer after cache hit to get current line numbers
+    - Merges current lines with cached `latest` versions
+    - Returns `merged_data` instead of `cached_data`
+  - **Test Coverage**:
+    - Created `test_save_refresh_bug_fix.lua` - Comprehensive test simulating edit → save workflow
+    - Created `test_cache_line_merge.lua` - Unit test for merge logic
+    - Created `test_save_with_mock_data.lua` - Test with mock Maven data to avoid network calls
+    - All tests passing: Virtual text correctly follows dependencies after buffer edits
+  - **Debug Evidence**:
+    ```
+    Parser detects (after edit): Line 3, Line 4 (correct)
+    Cache merge: Line 3 (was 2), Line 4 (was 3) (correct update!)
+    apply_virtual_text receives: Line 3, Line 4 (correct!)
+    Extmarks created at: Row 2, Row 3 (correct positions!)
+    ```
+  - **Impact**: Virtual text now correctly updates positions when buffer is edited, plugin usable for real editing workflows
+
+- ✅ **Insert Mode Virtual Text Bug Fix**: Fixed bug where virtual text appeared in insert mode after saving file
+  - **Problem**: When saving file in insert mode (`:w` from insert mode), virtual text would appear even though the design intent is to hide it in insert mode
+  - **Root Cause**: `BufWritePost` autocommand called `apply_virtual_text()` without checking current mode
+  - **Solution**: Added mode detection before applying virtual text in both cache hit and async callback paths
+  - **Changes**:
+    - Updated `init.lua` lines 75-78: Added mode check in cache hit path
+    - Updated `init.lua` lines 113-116: Added mode check in async callback path
+    - Logic: Only apply virtual text if NOT in insert mode (`i`, `ic`, `ix`) or replace mode (`R`, `Rc`, `Rx`)
+  - **Test Coverage**:
+    - Created `test_insert_mode_virtual_text.lua` - Verifies mode detection logic
+    - All mode detection tests passing (8/8): normal, insert, replace, visual modes
+  - **Impact**: Virtual text now correctly hidden in insert/replace mode, visible only in normal/visual mode
+
+- ✅ **Virtual Text Filtering Bug Fix**: Fixed bug where current version was shown in virtual text when it matched one of the latest versions
+  - **Problem**: When `include_prerelease = true`, if the current version appeared in the array of latest versions, it was still displayed in virtual text
+  - **Example**:
+    - Current: `"0.14.15"`
+    - Latest: `["0.14.15", "0.14.0-M7", "0.15.0-M1"]`
+    - Before: Showed `"← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1"` (incorrect - current version included)
+    - After: Shows `"← latest: 0.14.0-M7, 0.15.0-M1"` (correct - current version filtered out)
+  - **Root Cause**: Logic was checking if ANY version differed and then showing ALL versions
+  - **Solution**: Changed to filter out current version from the display array
+  - **Changes**:
+    - Updated `virtual_text.lua` lines 43-56: Added filtering logic to exclude current version
+    - Updated test expectations to match new behavior
+  - **Test Coverage**:
+    - Added test: `"apply_virtual_text with current version in multiple versions array filters it out"`
+    - Updated test: `"apply_virtual_text with multiple versions creates extmark when at least one differs"`
+    - Test Results: 35/38 tests passing (92%)
+  - **Impact**: Virtual text now only shows versions that are actually different from current version
+
+- ✅ **Code Cleanup**: Removed backup configuration files and commented out debug print statements
+  - **Changes**:
+    - Deleted `lua/dependencies/config.lua.bak` and `lua/dependencies/config.lua.bak2`
+    - Commented out `print_dependencies_with_versions()` calls in `init.lua` to reduce console noise
+  - **Impact**: Cleaner codebase, less verbose output during normal operation
+
+### 2025-12-14
+- ✅ **Virtual Text Duplication Fix**: Fixed bug where virtual text was concatenating on every save/command execution
+  - **Root Cause**: `apply_virtual_text()` was not clearing previous extmarks before creating new ones
+  - **Solution**: Added `M.clear(bufnr)` at the beginning of `apply_virtual_text()` function
+  - **Changes**:
+    - Updated `virtual_text.lua` line ~32: Added automatic clear before applying extmarks
+    - Updated `init.lua` line ~110: Removed redundant `clear()` call (now handled internally)
+  - **Impact**: Virtual text now displays correctly without duplication on file save or command re-execution
+  - **Test Coverage**: Added regression test `"apply_virtual_text does NOT duplicate extmarks on repeated calls (bug fix)"`
+    - Verifies extmarks are not duplicated after multiple `apply_virtual_text()` calls
+    - Tests that content is not concatenated (e.g., prevents `← latest: 1.4.5 ← latest: 1.4.5`)
+    - Simulates real-world scenario: file save triggers multiple updates
+  - **Test Results**: 34/37 tests passing (1 new test added, 3 pre-existing failures)
+
 - ✅ **Field Standardization Refactoring**: Eliminated redundant `current` field across entire codebase
   - **Decision**: Standardized on `version` field (matches Maven conventions and parser output)
   - **Changes**:
@@ -1094,7 +1186,7 @@ nvim your-project/build.sbt
 
 ---
 
-**Document Version**: 1.1
-**Generated**: 2025-12-12
+**Document Version**: 1.2
+**Generated**: 2025-12-15
 **Next Review**: When major changes are made to architecture or APIs
 

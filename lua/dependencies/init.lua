@@ -56,7 +56,7 @@ end
 
 function M.list_dependencies()
   local deps = M.extract_dependencies(vim.api.nvim_get_current_buf())
-  print_dependencies(deps)
+  -- print_dependencies(deps)
   return deps
 end
 
@@ -70,9 +70,73 @@ function M.list_dependencies_with_versions(force)
     local cached_data = cache.get(bufnr)
     if cached_data then
       print("📦 Usando caché (válido por " .. opts.cache_ttl .. ")")
-      -- print_dependencies_with_versions(cached_data)
-      virtual_text.apply_virtual_text(bufnr, cached_data)
-      return cached_data
+
+      -- RE-PARSEAR para obtener números de línea actuales
+      -- (las líneas pueden haber cambiado si el usuario editó el archivo)
+      local current_deps = M.extract_dependencies(bufnr)
+
+      -- DEBUG
+      print("🔍 DEBUG: Re-parsed dependencies after potential edit:")
+      for _, dep in ipairs(current_deps) do
+        print(string.format("  Line %d: %s:%s:%s", dep.line, dep.group, dep.artifact, dep.version))
+      end
+
+      -- Merge: actualizar líneas pero mantener versiones de cache
+      local merged_data = {}
+      for _, current_dep in ipairs(current_deps) do
+        local dep_key = string.format("%s:%s:%s", current_dep.group, current_dep.artifact, current_dep.version)
+
+        -- Buscar en cache por group:artifact:version
+        local found_in_cache = false
+        for _, cached_dep in ipairs(cached_data) do
+          local cached_key = string.format("%s:%s:%s", cached_dep.group, cached_dep.artifact, cached_dep.version)
+          if dep_key == cached_key then
+            -- Usar línea actual pero versión latest de cache
+            local merged_entry = {
+              group = current_dep.group,
+              artifact = current_dep.artifact,
+              version = current_dep.version,
+              line = current_dep.line,  -- LÍNEA ACTUAL (actualizada)
+              latest = cached_dep.latest  -- VERSIÓN DE CACHE
+            }
+            -- DEBUG
+            print(string.format("🔍 DEBUG: Merged - Line %d (was %d): %s -> %s",
+              merged_entry.line, cached_dep.line, dep_key, merged_entry.latest))
+            table.insert(merged_data, merged_entry)
+            found_in_cache = true
+            break
+          end
+        end
+
+        -- Si no está en cache, usar la versión actual como latest
+        -- (esto ocurre si el usuario agregó una nueva dependencia)
+        -- En el próximo refresh se consultará Maven para obtener la versión real
+        if not found_in_cache then
+          table.insert(merged_data, {
+            group = current_dep.group,
+            artifact = current_dep.artifact,
+            version = current_dep.version,
+            line = current_dep.line,
+            latest = current_dep.version  -- Mostrar versión actual en lugar de "unknown"
+          })
+        end
+      end
+
+      -- DEBUG: Verificar merged_data antes de pasarlo a virtual_text
+      print("🔍 DEBUG: Final merged_data to be passed to apply_virtual_text:")
+      for i, dep in ipairs(merged_data) do
+        print(string.format("  %d) Line %d: %s:%s:%s -> %s",
+          i, dep.line, dep.group, dep.artifact, dep.version, dep.latest))
+      end
+
+      -- Solo aplicar virtual text si NO estamos en modo inserción
+      local mode = vim.api.nvim_get_mode().mode
+      local is_insert_mode = mode:match('^i') or mode:match('^R')
+      if not is_insert_mode then
+        virtual_text.apply_virtual_text(bufnr, merged_data)
+      end
+
+      return merged_data
     end
   end
 
@@ -90,7 +154,7 @@ function M.list_dependencies_with_versions(force)
     print(string.format("Consultando Maven Central para %d dependencias...", #deps))
   end
 
-  -- Limpiar virtual text previo y mostrar indicador de "checking..."
+  -- Mostrar indicador de "checking..." (clear se hace automáticamente en apply_virtual_text)
   virtual_text.clear(bufnr)
   for _, dep_info in ipairs(deps) do
     virtual_text.show_checking_indicator(bufnr, dep_info.line)
@@ -103,9 +167,12 @@ function M.list_dependencies_with_versions(force)
     -- Guardar en caché
     cache.set(bufnr, deps_with_versions)
 
-    -- Limpiar indicadores y aplicar virtual text con resultados
-    virtual_text.clear(bufnr)
-    virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+    -- Solo aplicar virtual text si NO estamos en modo inserción
+    local mode = vim.api.nvim_get_mode().mode
+    local is_insert_mode = mode:match('^i') or mode:match('^R')
+    if not is_insert_mode then
+      virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+    end
   end)
 end
 

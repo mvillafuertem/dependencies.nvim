@@ -283,6 +283,41 @@ test("get_extmarks without details flag returns basic info", function()
   }
   virtual_text.apply_virtual_text(bufnr, deps_with_versions)
 
+
+test("apply_virtual_text with current version in multiple versions array filters it out", function()
+  -- g i v e n
+  local bufnr = setup_buffer_with_content([[
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core" % "0.14.15",
+  "org.typelevel" %% "cats-core" % "2.9.0",
+)
+  ]])
+  local deps_with_versions = {
+    -- Current version 0.14.15 está en el array de latest
+    { line = 2, dependency = "io.circe:circe-core_2.13:0.14.15", version = "0.14.15", latest = { "0.14.15", "0.14.0-M7", "0.15.0-M1" } },
+    -- Current version 2.9.0 NO está en el array de latest
+    { line = 3, dependency = "org.typelevel:cats-core_2.13:2.9.0", version = "2.9.0", latest = { "2.13.0", "2.3.0-M1", "2.3.0-M2" } }
+  }
+
+  -- w h e n
+  local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+
+  -- t h e n
+  assert_equal(count, 2, "Should create two extmarks")
+
+  local extmarks = virtual_text.get_extmarks(bufnr, true)
+  assert_equal(#extmarks, 2, "Should have two extmarks in buffer")
+
+  -- Verify that 0.14.15 is NOT shown (filtered out)
+  local first_text = extmarks[1][4].virt_text[1][1]
+  assert_equal(first_text, "  ← latest: 0.14.0-M7, 0.15.0-M1", "Should NOT include current version 0.14.15")
+
+  -- Verify that all versions are shown for cats-core (none match current)
+  local second_text = extmarks[2][4].virt_text[1][1]
+  assert_equal(second_text, "  ← latest: 2.13.0, 2.3.0-M1, 2.3.0-M2", "Should include all different versions")
+end)
+
+
   -- w h e n
   local extmarks = virtual_text.get_extmarks(bufnr, false)
 
@@ -392,6 +427,44 @@ test("clear and reapply creates extmarks with same content", function()
   local second_content = virtual_text.get_extmarks(bufnr, true)[1][4].virt_text[1][1]
   assert_equal(second_content, first_content, "Content should be identical after reapply")
   assert_equal(second_content, "  ← latest: 1.4.5", "Content should be '  ← latest: 1.4.5'")
+end)
+
+test("apply_virtual_text does NOT duplicate extmarks on repeated calls (bug fix)", function()
+  -- g i v e n - Regression test for duplication bug where virtual text was concatenating
+  -- Bug: apply_virtual_text() was NOT clearing previous extmarks before creating new ones
+  -- Result: "← latest: 1.4.5 ← latest: 1.4.5 ← latest: 1.4.5" (concatenated on every save)
+  local bufnr = setup_buffer_with_content("")
+  local deps_with_versions = {
+    { line = 1, dependency = "com.typesafe:config:1.4.0", version = "1.4.0", latest = "1.4.5" },
+    { line = 2, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1", latest = "0.14.15" }
+  }
+
+  -- w h e n - Apply virtual text multiple times (simulates save/command re-execution)
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions)
+  local extmarks_first = virtual_text.get_extmarks(bufnr, true)
+  local first_count = #extmarks_first
+  local first_content = extmarks_first[1][4].virt_text[1][1]
+
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions) -- 2nd call
+  local extmarks_second = virtual_text.get_extmarks(bufnr, true)
+
+  virtual_text.apply_virtual_text(bufnr, deps_with_versions) -- 3rd call
+  local extmarks_third = virtual_text.get_extmarks(bufnr, true)
+
+  -- t h e n - Should have same number of extmarks (not duplicated)
+  assert_equal(#extmarks_second, first_count, "Second call should NOT duplicate extmarks")
+  assert_equal(#extmarks_third, first_count, "Third call should NOT duplicate extmarks")
+  assert_equal(#extmarks_third, 2, "Should have exactly 2 extmarks (one per dependency)")
+
+  -- Verify content is NOT concatenated
+  local second_content = extmarks_second[1][4].virt_text[1][1]
+  local third_content = extmarks_third[1][4].virt_text[1][1]
+
+  assert_equal(second_content, first_content, "Content should be identical on 2nd call (not concatenated)")
+  assert_equal(third_content, first_content, "Content should be identical on 3rd call (not concatenated)")
+  assert_equal(third_content, "  ← latest: 1.4.5", "Content should be '  ← latest: 1.4.5' (not duplicated)")
+
+  io.write("  ℹ️  Duplication bug fix verified: extmarks correctly cleared before reapplying\n")
 end)
 
 -- ============================================================================
@@ -530,6 +603,7 @@ test("apply_virtual_text with multiple versions (table) displays comma-separated
   -- g i v e n
   local bufnr = setup_buffer_with_content("")
   local deps_with_versions = {
+    -- Current version (0.14.1) is NOT in the latest array
     { line = 1, dependency = "io.circe:circe-core:0.14.1", version = "0.14.1",
       latest = {"0.14.15", "0.14.0-M7", "0.15.0-M1"} }
   }
@@ -543,9 +617,9 @@ test("apply_virtual_text with multiple versions (table) displays comma-separated
   local extmarks = virtual_text.get_extmarks(bufnr, true)
   local virt_text_content = extmarks[1][4].virt_text[1][1]
 
-  -- Verify comma-separated format
+  -- Verify comma-separated format (all different from current)
   assert_equal(virt_text_content, "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1",
-               "Should display all versions separated by commas")
+               "Should display all versions that differ from current")
 end)
 
 test("apply_virtual_text with multiple versions creates extmark when at least one differs", function()
@@ -564,8 +638,9 @@ test("apply_virtual_text with multiple versions creates extmark when at least on
 
   local extmarks = virtual_text.get_extmarks(bufnr, true)
   local virt_text_content = extmarks[1][4].virt_text[1][1]
-  assert_equal(virt_text_content, "  ← latest: 0.14.1, 0.14.15, 0.15.0-M1",
-               "Should display all versions even if one matches current")
+  -- FIXED: Now filters out current version from display
+  assert_equal(virt_text_content, "  ← latest: 0.14.15, 0.15.0-M1",
+               "Should display only versions that differ from current (0.14.1 filtered out)")
 end)
 
 test("apply_virtual_text with multiple versions does NOT create extmark when all equal current", function()
