@@ -84,12 +84,15 @@ function M.list_dependencies_with_versions(force)
       -- Merge: actualizar líneas pero mantener versiones de cache
       local merged_data = {}
       for _, current_dep in ipairs(current_deps) do
-        local dep_key = string.format("%s:%s:%s", current_dep.group, current_dep.artifact, current_dep.version)
+        -- Buscar en cache solo por group:artifact (SIN version)
+        -- Esto permite que funcione cuando el usuario cambia la versión
+        -- Ejemplo: "org:art:1.0" -> "org:art:1.3" sigue encontrando "latest: 1.5"
+        local dep_key = string.format("%s:%s", current_dep.group, current_dep.artifact)
 
-        -- Buscar en cache por group:artifact:version
+        -- Buscar en cache por group:artifact (ignorando version)
         local found_in_cache = false
         for _, cached_dep in ipairs(cached_data) do
-          local cached_key = string.format("%s:%s:%s", cached_dep.group, cached_dep.artifact, cached_dep.version)
+          local cached_key = string.format("%s:%s", cached_dep.group, cached_dep.artifact)
           if dep_key == cached_key then
             -- Usar línea actual pero versión latest de cache
             local merged_entry = {

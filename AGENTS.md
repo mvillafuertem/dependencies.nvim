@@ -1041,6 +1041,25 @@ nvim your-project/build.sbt
 ## Changelog Summary
 
 ### 2025-12-15 (Latest)
+- ✅ **Version Change Cache Bug Fix**: Fixed bug where virtual text disappeared when user manually changed dependency version
+  - **Problem**: When user edited dependency version in `build.sbt`, virtual text showing latest version would disappear completely
+  - **Example**:
+    - Cache has: `"org:artifact:1.0"` → latest: `"1.5"`
+    - User edits to: `"org:artifact:1.3"`
+    - Before: Virtual text disappeared (treated as new dependency)
+    - After: Virtual text shows `← latest: 1.5` (correct behavior)
+  - **Root Cause**: Cache merge was matching by `group:artifact:version` - when version changed, lookup failed
+  - **Solution**: Changed cache key to match only by `group:artifact` (ignoring version)
+  - **Changes**:
+    - `init.lua` line 87: `string.format("%s:%s", ...)` - removed version from key
+    - `init.lua` line 92: `string.format("%s:%s", ...)` - removed version from cached key
+    - Comment updated: "Buscar en cache por group:artifact (ignorando version)"
+  - **Test Coverage**:
+    - Created `test_version_change_cache.lua` with 3 comprehensive tests
+    - All 3/3 tests passing: cache merge, intermediate version, update to latest
+  - **Documentation**: `VERSION_CHANGE_CACHE_FIX.md`
+  - **Impact**: Users can freely edit versions without virtual text disappearing
+
 - ✅ **Cache Merge "Unknown" Version Fix**: Fixed confusing "unknown" display for dependencies not in cache
   - **Problem**: When a dependency wasn't found in cache (e.g., newly added), it showed `latest = "unknown"` which confused users
   - **User Feedback**: "aparecen unknown cuando ya estas en la ultima version, pero no quiero ese comportamiento ya que es confuso, si la ultima version es 1.0 -> 1.0 asi deberia mostrarse"

@@ -1,0 +1,47 @@
+=== Version Change Cache Bug Fix - Test Results ===
+Date: 2025-12-15
+Status: ✅ ALL TESTS PASSED
+
+Test File: test_version_change_cache.lua
+Total Tests: 3/3 passing (100%)
+
+Test 1: Cache merge matches dependency by group:artifact only (ignoring version)
+  ✓ Cache set with version 1.0.0, latest 1.5.0
+  ✓ Buffer shows version 1.0.0 (no change in this test)
+  ✓ Merged: version=1.0.0, latest=1.5.0
+  ✓ PASSED
+
+Test 2: Virtual text appears when user changes version to intermediate value
+  ✓ Cache set: 2.6.0 -> 2.13.0
+  ✓ User edits buffer to: 2.9.0
+  ✓ Merged: version=2.9.0, latest=2.13.0 (from cache)
+  ✓ PASSED
+
+Test 3: No virtual text when user updates to latest version
+  ✓ Cache set: 0.14.1 -> 0.14.15
+  ✓ User edits buffer to: 0.14.15 (latest)
+  ✓ Virtual text extmarks: 0 (correctly no update indicator)
+  ✓ PASSED
+
+Fix Verification:
+  ✓ Working directory code: Cache key uses group:artifact only
+  ✓ Installed plugin: Cache key uses group:artifact only
+  ✓ Both locations synced and consistent
+
+Documentation Created:
+  ✓ VERSION_CHANGE_CACHE_FIX.md - Comprehensive fix documentation
+  ✓ AGENTS.md - Changelog entry added
+  ✓ test_version_change_cache.lua - Test suite created
+
+Impact Assessment:
+  ✅ Virtual text now persists across version changes
+  ✅ Shows correct latest version from cache
+  ✅ Only disappears when user updates to actual latest version
+  ✅ Smooth editing workflow without manual cache invalidation
+
+Related Fixes (completed earlier in session):
+  ✅ "Unknown" Display Fix - Shows current version instead of "unknown"
+  ✅ Virtual Text Line Refresh Fix - Re-parses line numbers after buffer edits
+  ✅ Insert Mode Virtual Text Fix - Hides virtual text during insert mode
+
+Conclusion: Version change cache bug is FIXED and fully tested.
