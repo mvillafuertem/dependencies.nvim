@@ -68,14 +68,16 @@ print("=== Dependencias encontradas ===")
 local deps = dependencies.extract_dependencies(bufnr)
 
 for i, dep_info in ipairs(deps) do
-  print(string.format("%d: %s", dep_info.line, dep_info.dependency))
+  local dep_string = dep_info.group .. ":" .. dep_info.artifact .. ":" .. dep_info.version
+  print(string.format("%d: %s", dep_info.line, dep_string))
 end
 
 print(string.format("\nTotal: %d dependencias", #deps))
 print("\nLista completa:")
 local deps_list = {}
 for _, dep_info in ipairs(deps) do
-  table.insert(deps_list, dep_info.dependency)
+  local dep_string = dep_info.group .. ":" .. dep_info.artifact .. ":" .. dep_info.version
+  table.insert(deps_list, dep_string)
 end
 print(vim.inspect(deps_list))
 

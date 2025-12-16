@@ -1,0 +1,266 @@
+=========================================
+  Dependencies.nvim - Test Suite
+=========================================
+
+Starting test execution...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Running: Parser Tests
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+=== Parser Tests ===
+✓ empty build.sbt returns empty dependencies
+✓ build.sbt with only comments returns empty dependencies
+✗ single dependency with += operator and literal version
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should parse += dependency correctly
+Expected: "io.netty:netty-tcnative-boringssl-static:2.0.74.Final"
+Actual: nil
+✗ single dependency with += operator and variable version
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should resolve variable with += operator
+Expected: "io.netty:netty-tcnative-boringssl-static:2.0.74.Final"
+Actual: nil
+✗ single dependency with += operator, scope and excludeAll with literal version
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should extract main dependency ignoring scope and exclusions
+Expected: "io.netty:netty-tcnative-boringssl-static:2.0.74.Final"
+Actual: nil
+✗ single dependency with += operator, scope and excludeAll with variable version
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should resolve variable and ignore scope and exclusions
+Expected: "io.netty:netty-tcnative-boringssl-static:2.0.74.Final"
+Actual: nil
+✗ simple dependency in Seq with literal version
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should parse dependency correctly
+Expected: "io.netty:netty-tcnative-boringssl-static:2.0.74.Final"
+Actual: nil
+✗ dependency with double percent operator in Seq
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should parse dependency with %% correctly
+Expected: "com.github.jwt-scala:jwt-circe:9.4.5"
+Actual: nil
+✗ dependency with variable version in Seq
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should resolve version variable
+Expected: "io.gatling.highcharts:gatling-charts-highcharts:3.8.4"
+Actual: nil
+✗ multiple dependencies with same version variable
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: First dependency should resolve version
+Expected: "io.gatling.highcharts:gatling-charts-highcharts:3.8.4"
+Actual: nil
+✗ dependencies are returned in document order in Seq
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: First in order
+Expected: "io.netty:netty-tcnative-boringssl-static:2.0.74.Final"
+Actual: nil
+✓ no duplicate dependencies in Seq
+✗ mixed literals and variables
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should resolve first variable
+Expected: "io.netty:netty-tcnative-boringssl-static:2.0.74.Final"
+Actual: nil
+✗ dependencies in Seq with map pattern
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: First dependency from map pattern
+Expected: "software.amazon.awssdk:auth:2.40.2"
+Actual: nil
+✗ dependencies with map pattern using variable
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should resolve version variable in map
+Expected: "io.circe:circe-core:0.14.1"
+Actual: nil
+✗ map pattern with version and scope modifier
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should extract main dependency ignoring scope in map
+Expected: "io.circe:circe-core:0.14.1"
+Actual: nil
+✗ chained map pattern with version and scope
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should resolve version from first map
+Expected: "io.circe:circe-core:0.14.1"
+Actual: nil
+✗ dependency with modifiers and exclude in Seq
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should extract main dependency ignoring modifiers
+Expected: "com.github.jwt-scala:jwt-circe:9.4.5"
+Actual: nil
+✗ complex real-world build.sbt
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Dependency 1 should match
+Expected: "io.netty:netty-tcnative-boringssl-static:2.0.74.Final"
+Actual: nil
+✓ get_scala_version detects scalaVersion with := operator
+✓ get_scala_version detects scalaVersion with Scala 2.12
+✓ get_scala_version detects scalaVersion with Scala 3
+✓ get_scala_version returns nil when no scalaVersion found
+✓ get_scala_version detects scalaVersion in complex build.sbt
+✓ get_scala_version handles scalaVersion at end of file
+✗ get_scala_version handles scalaVersion with single quotes
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should handle single quotes
+Expected: "2.13"
+Actual: nil
+✓ get_scala_version ignores commented scalaVersion
+
+=== Test Summary ===
+Tests passed: 10
+Tests failed: 17
+Total tests: 27
+
+❌ Some tests failed
+[0;32m✓ Parser Tests - PASSED[0m
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Running: Maven Integration Tests
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+=== Maven Integration Tests (TDD) ===
+✓ parse_version: handles simple version (1.0.0)
+✓ parse_version: handles two-part version (2.13)
+✓ parse_version: handles milestone version (1.0-M1)
+✓ parse_version: handles RC version (2.5.0-RC3)
+✓ parse_version: handles alpha version (1.0-alpha2)
+✓ parse_version: handles beta version (3.0-beta)
+✓ parse_version: handles SNAPSHOT version (1.0-SNAPSHOT)
+✓ parse_version: handles nil input
+✓ parse_version: handles malformed version
+✓ compare_versions: 1.0.0 < 2.0.0 (different major)
+✓ compare_versions: 1.5.0 < 1.6.0 (different minor)
+✓ compare_versions: 1.0.1 < 1.0.2 (different patch)
+✓ compare_versions: 1.0.0 == 1.0.0 (equal)
+✓ compare_versions: 2.0.0 > 1.0.0 (greater)
+✓ compare_versions: stable > RC (1.0 > 1.0-RC1)
+✓ compare_versions: stable > M (1.0 > 1.0-M1)
+✓ compare_versions: RC > M (1.0-RC1 > 1.0-M1)
+✓ compare_versions: M > beta (1.0-M1 > 1.0-beta)
+✓ compare_versions: beta > alpha (1.0-beta > 1.0-alpha)
+✓ compare_versions: alpha > SNAPSHOT (1.0-alpha > 1.0-SNAPSHOT)
+✓ compare_versions: RC2 > RC1 (same type, different number)
+✓ compare_versions: M3 > M1 (same type, different number)
+✓ compare_versions: handles nil inputs
+✓ process_metadata_xml: extracts latest stable version
+✓ process_metadata_xml: filters prereleases when include_prerelease=false
+✓ process_metadata_xml: includes prereleases when include_prerelease=true
+✓ process_metadata_xml: returns current version when user is up-to-date
+✓ process_metadata_xml: returns nil for empty XML
+✓ process_metadata_xml: returns nil for malformed XML
+✓ process_metadata_xml: sorts versions correctly
+✓ process_metadata_xml: only returns versions GREATER than current
+✓ process_metadata_xml: with prerelease returns 1 stable + 2 prereleases
+✓ process_metadata_xml: prerelease mode returns versions in ascending order
+✓ enrich_with_latest_versions_async: handles empty input
+  ℹ️  Found latest version: 1.4.5
+✓ enrich_with_latest_versions_async: returns correct format with new structure
+  ℹ️  Found multiple versions: 0.14.15, 0.15.0-M1
+✓ enrich_with_latest_versions_async: with include_prerelease=true returns table
+  ℹ️  Found latest for cats-core_2.13: 2.13.0
+✓ enrich_with_latest_versions_async: handles Scala library with version suffix
+  ℹ️  Found latest for config (no suffix): 1.4.5
+✓ enrich_with_latest_versions_async: handles Java library without Scala suffix
+  ℹ️  com.typesafe:config -> 1.4.5
+  ℹ️  org.scala-lang:scala-library -> 2.13.18
+✓ enrich_with_latest_versions_async: handles multiple dependencies
+✓ enrich_with_latest_versions_async: handles missing group/artifact gracefully
+  ℹ️  Non-existent artifact returned: unknown
+✓ enrich_with_latest_versions_async: handles non-existent artifact
+✓ enrich_with_latest_versions_async: preserves line order
+  ℹ️  Found latest for cats-core_3: 2.13.0
+✓ enrich_with_latest_versions_async: handles Scala 3 version suffix
+✗ process_metadata_xml: handles version with 4 parts (1.2.3.4)
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: should handle 4-part versions
+Expected: "1.2.3.5"
+Actual: "1.2.3.4"
+✓ compare_versions: handles versions with different part counts
+✓ parse_version: handles version with extra text
+✓ process_metadata_xml: no stable versions, only prereleases
+✓ process_metadata_xml: prerelease mode with no stable versions
+
+=== Test Summary ===
+Tests passed: 47
+Tests failed: 1
+Total tests: 48
+
+❌ Some tests failed
+[0;32m✓ Maven Integration Tests - PASSED[0m
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Running: Virtual Text Tests
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+=== Integration Tests - Virtual Text (TDD Order) ===
+✓ virtual_text.ns namespace exists
+✓ get_extmarks returns empty array for buffer without extmarks
+✓ apply_virtual_text with single dependency creates one extmark
+✗ apply_virtual_text creates extmark with correct content
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Virtual text should have exact format '  ← latest: 1.4.5'
+Expected: "  ← latest: 1.4.5"
+Actual: "   1.4.5"
+✓ apply_virtual_text creates extmark with correct highlight group
+✓ apply_virtual_text does NOT create extmark when current equals latest
+✓ apply_virtual_text creates extmark at end of line
+✓ apply_virtual_text places extmark on correct line
+✓ apply_virtual_text with multiple dependencies creates multiple extmarks
+✗ apply_virtual_text creates correct content for each dependency
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: First extmark should show '  ← latest: 1.4.5'
+Expected: "  ← latest: 1.4.5"
+Actual: "   1.4.5"
+✓ apply_virtual_text places extmarks on correct lines for multiple dependencies
+✓ apply_virtual_text skips dependencies with nil latest version
+✗ apply_virtual_text skips dependencies with 'unknown' version
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: First extmark should be for config
+Expected: "  ← latest: 1.4.5"
+Actual: "   1.4.5"
+✓ apply_virtual_text with empty array creates no extmarks
+✗ apply_virtual_text with current version in multiple versions array filters it out
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should NOT include current version 0.14.15
+Expected: "  ← latest: 0.14.0-M7, 0.15.0-M1"
+Actual: "   0.14.0-M7, 0.15.0-M1"
+✓ get_extmarks without details flag returns basic info
+✓ get_extmarks with details flag returns full details
+✓ clear removes all extmarks from buffer
+✓ clear on buffer without extmarks does not error
+✓ clear and reapply creates same number of extmarks
+✗ clear and reapply creates extmarks with same content
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Content should be '  ← latest: 1.4.5'
+Expected: "  ← latest: 1.4.5"
+Actual: "   1.4.5"
+✗ apply_virtual_text does NOT duplicate extmarks on repeated calls (bug fix)
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Content should be '  ← latest: 1.4.5' (not duplicated)
+Expected: "  ← latest: 1.4.5"
+Actual: "   1.4.5"
+✗ full integration: extract, fetch, and display virtual text
+  Error: lua/tests/virtual_text_spec.lua:492: attempt to call field 'enrich_with_latest_versions' (a nil value)
+✗ full integration with Scala dependencies using %%
+  Error: lua/tests/virtual_text_spec.lua:538: attempt to call field 'enrich_with_latest_versions' (a nil value)
+✗ full integration with real buffer content
+  Error: lua/tests/virtual_text_spec.lua:577: attempt to call field 'enrich_with_latest_versions' (a nil value)
+✗ apply_virtual_text with multiple versions (table) displays comma-separated list
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should display all versions that differ from current
+Expected: "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1"
+Actual: "   0.14.15, 0.14.0-M7, 0.15.0-M1"
+✗ apply_virtual_text with multiple versions creates extmark when at least one differs
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should display only versions that differ from current (0.14.1 filtered out)
+Expected: "  ← latest: 0.14.15, 0.15.0-M1"
+Actual: "   0.14.15, 0.15.0-M1"
+✓ apply_virtual_text with multiple versions does NOT create extmark when all equal current
+✓ apply_virtual_text with empty version table does NOT create extmark
+✗ apply_virtual_text with mixed single and multiple version formats
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: First extmark should show single version
+Expected: "  ← latest: 1.4.5"
+Actual: "   1.4.5"
+✗ apply_virtual_text with multiple versions handles pre-release versions correctly
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Should display stable version first, then pre-releases
+Expected: "  ← latest: 2.13.0, 2.3.0-M1, 2.3.0-M2"
+Actual: "   2.13.0, 2.3.0-M1, 2.3.0-M2"
+✗ apply_virtual_text with multiple versions on different lines
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: First extmark should show circe versions
+Expected: "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1"
+Actual: "   0.14.15, 0.14.0-M7, 0.15.0-M1"
+✗ clear and reapply with multiple versions preserves content
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: Content should show all three versions
+Expected: "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1"
+Actual: "   0.14.15, 0.14.0-M7, 0.15.0-M1"
+✗ apply_virtual_text with multiple versions skips when mixed with unknown
+  Error: ...re/nvim/lazy/dependencies.nvim/lua/tests/test_helper.lua:22: First extmark should show multiple versions
+Expected: "  ← latest: 0.14.15, 0.14.0-M7, 0.15.0-M1"
+Actual: "   0.14.15, 0.14.0-M7, 0.15.0-M1"
+✓ apply_virtual_text respects custom virtual_text_prefix configuration
+✓ apply_virtual_text with custom prefix and multiple versions
+✓ apply_virtual_text with empty prefix configuration
+✓ apply_virtual_text with multiple dependencies and custom prefix
+
+=== Test Summary ===
+Tests passed: 22
+Tests failed: 16
+Total tests: 38
+
+❌ Some tests failed
+[0;32m✓ Virtual Text Tests - PASSED[0m
+
+=========================================
+  Test Summary
+=========================================
+[0;32m✓ All test suites passed! (3/3)[0m

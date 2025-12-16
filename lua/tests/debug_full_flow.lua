@@ -20,7 +20,8 @@ local deps = parser_module.extract_dependencies(bufnr)
 print("=== Result from extract_dependencies ===")
 print(string.format("Found %d dependencies:", #deps))
 for i, dep in ipairs(deps) do
-  print(string.format("  %d. Line %d: %s", i, dep.line, dep.dependency))
+  local dep_string = dep.group .. ":" .. dep.artifact .. ":" .. dep.version
+  print(string.format("  %d. Line %d: %s", i, dep.line, dep_string))
 end
 
 if #deps == 0 then

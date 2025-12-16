@@ -29,7 +29,7 @@ function M.get_dep_query()
       (infix_expression
         left: (infix_expression
           left: (string) @org
-          operator: (operator_identifier)
+          operator: (operator_identifier) @dep_operator
           right: (string) @artifact)
         operator: (operator_identifier)
         right: [(string) (identifier)] @version) @dep_node
@@ -39,7 +39,7 @@ function M.get_dep_query()
         left: (infix_expression
           left: (infix_expression
             left: (string) @org2
-            operator: (operator_identifier)
+            operator: (operator_identifier) @dep_operator2
             right: (string) @artifact2)
           operator: (operator_identifier)
           right: [(string) (identifier)] @version2) @dep_node2
@@ -63,7 +63,7 @@ function M.get_single_dep_query()
             left: (identifier) @lib_dep_name
             operator: (operator_identifier) @plus_eq
             right: (string) @org_single)
-          operator: (operator_identifier)
+          operator: (operator_identifier) @dep_operator_single
           right: (string) @artifact_single)
         operator: (operator_identifier)
         right: [(string) (identifier)] @version_single) @single_dep_node

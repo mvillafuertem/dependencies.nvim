@@ -164,11 +164,12 @@ function M.parse_ttl(ttl_str)
   end
 end
 
---- Checks if cached data is still valid (not expired)
+--- Checks if cached data is still valid (not expired and same include_prerelease setting)
 --- @param bufnr number Buffer number
 --- @param ttl_str string Time-to-live string (e.g., "1d", "6h")
---- @return boolean True if cache is valid and not expired
-function M.is_valid(bufnr, ttl_str)
+--- @param include_prerelease boolean Current include_prerelease setting
+--- @return boolean True if cache is valid, not expired, and matches include_prerelease setting
+function M.is_valid(bufnr, ttl_str, include_prerelease)
   local filepath = get_cache_file_path(bufnr)
   if not filepath then
     return false
@@ -176,6 +177,12 @@ function M.is_valid(bufnr, ttl_str)
 
   local entry = read_cache_file(filepath)
   if not entry or not entry.timestamp then
+    return false
+  end
+
+  -- Verificar si el valor de include_prerelease cambió
+  -- Si cambió, la cache no es válida (necesitamos refrescar desde Maven)
+  if entry.include_prerelease ~= include_prerelease then
     return false
   end
 
@@ -205,8 +212,9 @@ end
 --- Stores data in cache for the given buffer
 --- @param bufnr number Buffer number
 --- @param data table Dependency data to cache
+--- @param include_prerelease boolean Whether prerelease versions were included
 --- @return boolean Success
-function M.set(bufnr, data)
+function M.set(bufnr, data, include_prerelease)
   local filepath = get_cache_file_path(bufnr)
   if not filepath then
     return false
@@ -215,7 +223,8 @@ function M.set(bufnr, data)
   local entry = {
     data = data,
     timestamp = os.time(),
-    buffer_name = vim.api.nvim_buf_get_name(bufnr)
+    buffer_name = vim.api.nvim_buf_get_name(bufnr),
+    include_prerelease = include_prerelease
   }
 
   return write_cache_file(filepath, entry)

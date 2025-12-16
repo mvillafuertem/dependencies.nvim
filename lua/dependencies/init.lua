@@ -66,7 +66,7 @@ function M.list_dependencies_with_versions(force)
   local opts = config.get()
 
   -- Verificar si tenemos datos válidos en caché (si no es forzado)
-  if not force and cache.is_valid(bufnr, opts.cache_ttl) then
+  if not force and cache.is_valid(bufnr, opts.cache_ttl, opts.include_prerelease) then
     local cached_data = cache.get(bufnr)
     if cached_data then
       print("📦 Usando caché (válido por " .. opts.cache_ttl .. ")")
@@ -167,8 +167,8 @@ function M.list_dependencies_with_versions(force)
   maven.enrich_with_latest_versions_async(deps, scala_version, function(deps_with_versions)
     -- print_dependencies_with_versions(deps_with_versions)
 
-    -- Guardar en caché
-    cache.set(bufnr, deps_with_versions)
+    -- Guardar en caché con el valor de include_prerelease usado
+    cache.set(bufnr, deps_with_versions, opts.include_prerelease)
 
     -- Solo aplicar virtual text si NO estamos en modo inserción
     local mode = vim.api.nvim_get_mode().mode

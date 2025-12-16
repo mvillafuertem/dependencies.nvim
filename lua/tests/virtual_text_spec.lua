@@ -4,7 +4,11 @@
 local parser = require('dependencies.parser')
 local maven = require('dependencies.maven')
 local virtual_text = require('dependencies.virtual_text')
+local config = require('dependencies.config')
 local helper = require('tests.test_helper')
+
+-- Initialize config with defaults before running tests
+config.setup()
 
 -- Extract helper functions for convenience
 local setup_buffer_with_content = helper.setup_buffer_with_content
@@ -482,15 +486,24 @@ libraryDependencies ++= Seq(
 ]]
   local bufnr = setup_buffer_with_content(content)
 
-  -- w h e n - Complete flow using real modules
+  -- w h e n - Complete flow using parser and virtual_text (mock maven enrichment)
   local deps = parser.extract_dependencies(bufnr)
   assert_equal(#deps, 1, "Should extract one dependency")
 
   local scala_version = parser.get_scala_version(bufnr)
   assert_equal(scala_version, "2.13", "Should detect Scala version 2.13")
 
-  local deps_with_versions = maven.enrich_with_latest_versions(deps, scala_version)
-  assert_equal(#deps_with_versions, 1, "Should enrich one dependency")
+  -- Mock maven enrichment (avoid network calls in tests)
+  local deps_with_versions = {
+    {
+      group = deps[1].group,
+      artifact = deps[1].artifact,
+      version = deps[1].version,
+      line = deps[1].line,
+      latest = "1.4.5"
+    }
+  }
+  assert_equal(#deps_with_versions, 1, "Should have one enriched dependency")
 
   virtual_text.clear(bufnr)
   local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)
@@ -532,10 +545,25 @@ libraryDependencies ++= Seq(
 ]]
   local bufnr = setup_buffer_with_content(content)
 
-  -- w h e n
+  -- w h e n - Complete flow using parser and virtual_text (mock maven enrichment)
   local deps = parser.extract_dependencies(bufnr)
+  assert_equal(#deps, 3, "Should extract three dependencies")
+
   local scala_version = parser.get_scala_version(bufnr)
-  local deps_with_versions = maven.enrich_with_latest_versions(deps, scala_version)
+  assert_equal(scala_version, "2.13", "Should detect Scala version 2.13")
+
+  -- Mock maven enrichment (avoid network calls in tests)
+  local deps_with_versions = {}
+  for i, dep in ipairs(deps) do
+    table.insert(deps_with_versions, {
+      group = dep.group,
+      artifact = dep.artifact,
+      version = dep.version,
+      line = dep.line,
+      latest = "0.14.15"  -- Mock latest version for all circe dependencies
+    })
+  end
+  assert_equal(#deps_with_versions, 3, "Should have three enriched dependencies")
 
   virtual_text.clear(bufnr)
   local count = virtual_text.apply_virtual_text(bufnr, deps_with_versions)

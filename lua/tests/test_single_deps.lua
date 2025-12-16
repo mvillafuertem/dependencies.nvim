@@ -26,8 +26,9 @@ local deps1 = parser.extract_dependencies(bufnr1)
 
 print(string.format("  Dependencias encontradas: %d", #deps1))
 if #deps1 == 1 then
-  print(string.format("  ✓ Dependencia: %s", deps1[1].dependency))
-  if deps1[1].dependency == "io.netty:netty-tcnative-boringssl-static:2.0.74.Final" then
+  local dep_string = deps1[1].group .. ":" .. deps1[1].artifact .. ":" .. deps1[1].version
+  print(string.format("  ✓ Dependencia: %s", dep_string))
+  if dep_string == "io.netty:netty-tcnative-boringssl-static:2.0.74.Final" then
     print("  ✓ PASSED: Dependencia parseada correctamente")
   else
     print("  ✗ FAILED: Dependencia incorrecta")
@@ -49,8 +50,9 @@ local deps2 = parser.extract_dependencies(bufnr2)
 
 print(string.format("  Dependencias encontradas: %d", #deps2))
 if #deps2 == 1 then
-  print(string.format("  ✓ Dependencia: %s", deps2[1].dependency))
-  if deps2[1].dependency == "io.netty:netty-tcnative-boringssl-static:2.0.74.Final" then
+  local dep_string = deps2[1].group .. ":" .. deps2[1].artifact .. ":" .. deps2[1].version
+  print(string.format("  ✓ Dependencia: %s", dep_string))
+  if dep_string == "io.netty:netty-tcnative-boringssl-static:2.0.74.Final" then
     print("  ✓ PASSED: Variable de versión resuelta correctamente")
   else
     print("  ✗ FAILED: Variable de versión no resuelta correctamente")
@@ -76,7 +78,8 @@ local deps3 = parser.extract_dependencies(bufnr3)
 
 print(string.format("  Dependencias encontradas: %d", #deps3))
 for i, dep in ipairs(deps3) do
-  print(string.format("  %d. Línea %d: %s", i, dep.line, dep.dependency))
+  local dep_string = dep.group .. ":" .. dep.artifact .. ":" .. dep.version
+  print(string.format("  %d. Línea %d: %s", i, dep.line, dep_string))
 end
 
 if #deps3 == 3 then

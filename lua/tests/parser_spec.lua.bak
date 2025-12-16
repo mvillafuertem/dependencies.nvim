@@ -10,6 +10,14 @@ local assert_equal = helper.assert_equal
 local assert_table_equal = helper.assert_table_equal
 local test = helper.test
 
+-- Helper function to convert new format {group, artifact, version} to old format "group:artifact:version"
+local function to_dependency_string(dep)
+  if dep.group and dep.artifact and dep.version then
+    return dep.group .. ":" .. dep.artifact .. ":" .. dep.version
+  end
+  return nil
+end
+
 -- Reset test counters at the start
 helper.reset_counters()
 
@@ -64,9 +72,7 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.
 
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with +=")
-  assert_equal(deps[1].group, "io.netty", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "netty-tcnative-boringssl-static", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "2.0.74.Final", "Should parse version correctly")
+  assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should parse += dependency correctly")
   assert_equal(deps[1].line, 1, "Should capture line 1")
 end)
 
@@ -83,9 +89,7 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % nettyVer
 
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with += and variable")
-  assert_equal(deps[1].group, "io.netty", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "netty-tcnative-boringssl-static", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "2.0.74.Final", "Should resolve variable with += operator")
+  assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should resolve variable with += operator")
   assert_equal(deps[1].line, 2, "Should capture line 2")
 end)
 
@@ -104,9 +108,7 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % "2.0.74.
 
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with += despite scope and excludeAll")
-  assert_equal(deps[1].group, "io.netty", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "netty-tcnative-boringssl-static", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "2.0.74.Final", "Should extract main dependency ignoring scope and exclusions")
+  assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should extract main dependency ignoring scope and exclusions")
   assert_equal(deps[1].line, 1, "Should capture line 1")
 end)
 
@@ -126,9 +128,7 @@ libraryDependencies += "io.netty" % "netty-tcnative-boringssl-static" % nettyVer
 
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency with += and variable despite scope and excludeAll")
-  assert_equal(deps[1].group, "io.netty", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "netty-tcnative-boringssl-static", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "2.0.74.Final", "Should resolve variable and ignore scope and exclusions")
+  assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should resolve variable and ignore scope and exclusions")
   assert_equal(deps[1].line, 2, "Should capture line 2")
 end)
 
@@ -150,9 +150,7 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency")
-  assert_equal(deps[1].group, "io.netty", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "netty-tcnative-boringssl-static", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "2.0.74.Final", "Should parse dependency correctly")
+  assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should parse dependency correctly")
   assert_equal(deps[1].line, 2, "Should capture correct line number")
 end)
 
@@ -170,9 +168,7 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency")
-  assert_equal(deps[1].group, "com.github.jwt-scala", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "jwt-circe", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "9.4.5", "Should parse dependency with %% correctly")
+  assert_equal(deps[1].dependency, "com.github.jwt-scala:jwt-circe:9.4.5", "Should parse dependency with %% correctly")
   assert_equal(deps[1].line, 2, "Should capture line 2")
 end)
 
@@ -195,9 +191,7 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency")
-  assert_equal(deps[1].group, "io.gatling.highcharts", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "gatling-charts-highcharts", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "3.8.4", "Should resolve version variable")
+  assert_equal(deps[1].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "Should resolve version variable")
   assert_equal(deps[1].line, 3, "Should capture line 3")
 end)
 
@@ -221,13 +215,9 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 2, "Should find two dependencies")
-  assert_equal(deps[1].group, "io.gatling.highcharts", "First dependency: should parse group correctly")
-  assert_equal(deps[1].artifact, "gatling-charts-highcharts", "First dependency: should parse artifact correctly")
-  assert_equal(deps[1].version, "3.8.4", "First dependency: should resolve version")
+  assert_equal(deps[1].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "First dependency should resolve version")
   assert_equal(deps[1].line, 3, "First dependency on line 3")
-  assert_equal(deps[2].group, "io.gatling", "Second dependency: should parse group correctly")
-  assert_equal(deps[2].artifact, "gatling-test-framework", "Second dependency: should parse artifact correctly")
-  assert_equal(deps[2].version, "3.8.4", "Second dependency: should resolve version")
+  assert_equal(deps[2].dependency, "io.gatling:gatling-test-framework:3.8.4", "Second dependency should resolve version")
   assert_equal(deps[2].line, 4, "Second dependency on line 4")
 end)
 
@@ -250,15 +240,9 @@ libraryDependencies ++= Seq(
   assert_equal(deps[1].line, 2, "First dependency on line 2")
   assert_equal(deps[2].line, 3, "Second dependency on line 3")
   assert_equal(deps[3].line, 4, "Third dependency on line 4")
-  assert_equal(deps[1].group, "io.netty", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "netty-tcnative-boringssl-static", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "2.0.74.Final", "First in order")
-  assert_equal(deps[2].group, "io.gatling.highcharts", "Should parse group correctly")
-  assert_equal(deps[2].artifact, "gatling-charts-highcharts", "Should parse artifact correctly")
-  assert_equal(deps[2].version, "3.8.4", "Second in order")
-  assert_equal(deps[3].group, "com.github.jwt-scala", "Should parse group correctly")
-  assert_equal(deps[3].artifact, "jwt-circe", "Should parse artifact correctly")
-  assert_equal(deps[3].version, "9.4.5", "Third in order")
+  assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "First in order")
+  assert_equal(deps[2].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "Second in order")
+  assert_equal(deps[3].dependency, "com.github.jwt-scala:jwt-circe:9.4.5", "Third in order")
 end)
 
 test("no duplicate dependencies in Seq", function()
@@ -298,17 +282,11 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
-  assert_equal(deps[1].group, "io.netty", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "netty-tcnative-boringssl-static", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "2.0.74.Final", "Should resolve first variable")
+  assert_equal(deps[1].dependency, "io.netty:netty-tcnative-boringssl-static:2.0.74.Final", "Should resolve first variable")
   assert_equal(deps[1].line, 5, "First dependency on line 5")
-  assert_equal(deps[2].group, "io.gatling.highcharts", "Should parse group correctly")
-  assert_equal(deps[2].artifact, "gatling-charts-highcharts", "Should parse artifact correctly")
-  assert_equal(deps[2].version, "3.8.4", "Should resolve second variable")
+  assert_equal(deps[2].dependency, "io.gatling.highcharts:gatling-charts-highcharts:3.8.4", "Should resolve second variable")
   assert_equal(deps[2].line, 6, "Second dependency on line 6")
-  assert_equal(deps[3].group, "com.github.jwt-scala", "Should parse group correctly")
-  assert_equal(deps[3].artifact, "jwt-circe", "Should parse artifact correctly")
-  assert_equal(deps[3].version, "9.4.5", "Should use literal version")
+  assert_equal(deps[3].dependency, "com.github.jwt-scala:jwt-circe:9.4.5", "Should use literal version")
   assert_equal(deps[3].line, 7, "Third dependency on line 7")
 end)
 
@@ -332,17 +310,11 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
-  assert_equal(deps[1].group, "software.amazon.awssdk", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "auth", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "2.40.2", "First dependency from map pattern")
+  assert_equal(deps[1].dependency, "software.amazon.awssdk:auth:2.40.2", "First dependency from map pattern")
   assert_equal(deps[1].line, 2, "First dependency on line 2")
-  assert_equal(deps[2].group, "software.amazon.awssdk", "Should parse group correctly")
-  assert_equal(deps[2].artifact, "http-auth-aws", "Should parse artifact correctly")
-  assert_equal(deps[2].version, "2.40.2", "Second dependency from map pattern")
+  assert_equal(deps[2].dependency, "software.amazon.awssdk:http-auth-aws:2.40.2", "Second dependency from map pattern")
   assert_equal(deps[2].line, 3, "Second dependency on line 3")
-  assert_equal(deps[3].group, "software.amazon.awssdk", "Should parse group correctly")
-  assert_equal(deps[3].artifact, "opensearchserverless", "Should parse artifact correctly")
-  assert_equal(deps[3].version, "2.40.2", "Third dependency from map pattern")
+  assert_equal(deps[3].dependency, "software.amazon.awssdk:opensearchserverless:2.40.2", "Third dependency from map pattern")
   assert_equal(deps[3].line, 4, "Third dependency on line 4")
 end)
 
@@ -363,17 +335,11 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
-  assert_equal(deps[1].group, "io.circe", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "circe-core", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "0.14.1", "Should resolve version variable in map")
+  assert_equal(deps[1].dependency, "io.circe:circe-core:0.14.1", "Should resolve version variable in map")
   assert_equal(deps[1].line, 3, "First dependency on line 3")
-  assert_equal(deps[2].group, "io.circe", "Should parse group correctly")
-  assert_equal(deps[2].artifact, "circe-generic", "Should parse artifact correctly")
-  assert_equal(deps[2].version, "0.14.1", "Should resolve version variable in map")
+  assert_equal(deps[2].dependency, "io.circe:circe-generic:0.14.1", "Should resolve version variable in map")
   assert_equal(deps[2].line, 4, "Second dependency on line 4")
-  assert_equal(deps[3].group, "io.circe", "Should parse group correctly")
-  assert_equal(deps[3].artifact, "circe-parser", "Should parse artifact correctly")
-  assert_equal(deps[3].version, "0.14.1", "Should resolve version variable in map")
+  assert_equal(deps[3].dependency, "io.circe:circe-parser:0.14.1", "Should resolve version variable in map")
   assert_equal(deps[3].line, 5, "Third dependency on line 5")
 end)
 
@@ -394,17 +360,11 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies")
-  assert_equal(deps[1].group, "io.circe", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "circe-core", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "0.14.1", "Should extract main dependency ignoring scope in map")
+  assert_equal(deps[1].dependency, "io.circe:circe-core:0.14.1", "Should extract main dependency ignoring scope in map")
   assert_equal(deps[1].line, 3, "First dependency on line 3")
-  assert_equal(deps[2].group, "io.circe", "Should parse group correctly")
-  assert_equal(deps[2].artifact, "circe-generic", "Should parse artifact correctly")
-  assert_equal(deps[2].version, "0.14.1", "Should extract main dependency ignoring scope in map")
+  assert_equal(deps[2].dependency, "io.circe:circe-generic:0.14.1", "Should extract main dependency ignoring scope in map")
   assert_equal(deps[2].line, 4, "Second dependency on line 4")
-  assert_equal(deps[3].group, "io.circe", "Should parse group correctly")
-  assert_equal(deps[3].artifact, "circe-parser", "Should parse artifact correctly")
-  assert_equal(deps[3].version, "0.14.1", "Should extract main dependency ignoring scope in map")
+  assert_equal(deps[3].dependency, "io.circe:circe-parser:0.14.1", "Should extract main dependency ignoring scope in map")
   assert_equal(deps[3].line, 5, "Third dependency on line 5")
 end)
 
@@ -425,17 +385,11 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 3, "Should find three dependencies with chained map")
-  assert_equal(deps[1].group, "io.circe", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "circe-core", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "0.14.1", "Should resolve version from first map")
+  assert_equal(deps[1].dependency, "io.circe:circe-core:0.14.1", "Should resolve version from first map")
   assert_equal(deps[1].line, 3, "First dependency on line 3")
-  assert_equal(deps[2].group, "io.circe", "Should parse group correctly")
-  assert_equal(deps[2].artifact, "circe-generic", "Should parse artifact correctly")
-  assert_equal(deps[2].version, "0.14.1", "Should resolve version from first map")
+  assert_equal(deps[2].dependency, "io.circe:circe-generic:0.14.1", "Should resolve version from first map")
   assert_equal(deps[2].line, 4, "Second dependency on line 4")
-  assert_equal(deps[3].group, "io.circe", "Should parse group correctly")
-  assert_equal(deps[3].artifact, "circe-parser", "Should parse artifact correctly")
-  assert_equal(deps[3].version, "0.14.1", "Should resolve version from first map")
+  assert_equal(deps[3].dependency, "io.circe:circe-parser:0.14.1", "Should resolve version from first map")
   assert_equal(deps[3].line, 5, "Third dependency on line 5")
 end)
 
@@ -457,9 +411,7 @@ libraryDependencies ++= Seq(
 
   -- t h e n
   assert_equal(#deps, 1, "Should find one dependency despite modifiers")
-  assert_equal(deps[1].group, "com.github.jwt-scala", "Should parse group correctly")
-  assert_equal(deps[1].artifact, "jwt-circe", "Should parse artifact correctly")
-  assert_equal(deps[1].version, "9.4.5", "Should extract main dependency ignoring modifiers")
+  assert_equal(deps[1].dependency, "com.github.jwt-scala:jwt-circe:9.4.5", "Should extract main dependency ignoring modifiers")
   assert_equal(deps[1].line, 2, "Should capture line 2")
 end)
 
@@ -504,23 +456,23 @@ libraryDependencies ++= Seq(
   assert_equal(#deps, 10, "Should find all 10 dependencies")
 
   local expected_deps = {
-    {group = "io.netty", artifact = "netty-tcnative-boringssl-static", version = "2.0.74.Final", line = 8},
-    {group = "io.gatling.highcharts", artifact = "gatling-charts-highcharts", version = "3.8.4", line = 9},
-    {group = "io.gatling", artifact = "gatling-test-framework", version = "3.8.4", line = 10},
-    {group = "com.github.jwt-scala", artifact = "jwt-circe", version = "9.4.5", line = 11},
-    {group = "software.amazon.awssdk", artifact = "auth", version = "2.40.2", line = 13},
-    {group = "software.amazon.awssdk", artifact = "http-auth-aws", version = "2.40.2", line = 14},
-    {group = "software.amazon.awssdk", artifact = "opensearchserverless", version = "2.40.2", line = 15},
-    {group = "io.circe", artifact = "circe-core", version = "0.14.1", line = 21},
-    {group = "io.circe", artifact = "circe-generic", version = "0.14.1", line = 22},
-    {group = "io.circe", artifact = "circe-parser", version = "0.14.1", line = 23}
+    "io.netty:netty-tcnative-boringssl-static:2.0.74.Final",
+    "io.gatling.highcharts:gatling-charts-highcharts:3.8.4",
+    "io.gatling:gatling-test-framework:3.8.4",
+    "com.github.jwt-scala:jwt-circe:9.4.5",
+    "software.amazon.awssdk:auth:2.40.2",
+    "software.amazon.awssdk:http-auth-aws:2.40.2",
+    "software.amazon.awssdk:opensearchserverless:2.40.2",
+    "io.circe:circe-core:0.14.1",
+    "io.circe:circe-generic:0.14.1",
+    "io.circe:circe-parser:0.14.1"
   }
 
-  for i, expected in ipairs(expected_deps) do
-    assert_equal(deps[i].group, expected.group, string.format("Dependency %d: should parse group correctly", i))
-    assert_equal(deps[i].artifact, expected.artifact, string.format("Dependency %d: should parse artifact correctly", i))
-    assert_equal(deps[i].version, expected.version, string.format("Dependency %d: should parse version correctly", i))
-    assert_equal(deps[i].line, expected.line, string.format("Dependency %d: should be on line %d", i, expected.line))
+  local expected_lines = {8, 9, 10, 11, 13, 14, 15, 21, 22, 23}
+
+  for i, expected_dep in ipairs(expected_deps) do
+    assert_equal(deps[i].dependency, expected_dep, string.format("Dependency %d should match", i))
+    assert_equal(deps[i].line, expected_lines[i], string.format("Dependency %d should be on line %d", i, expected_lines[i]))
   end
 end)
 
@@ -624,10 +576,8 @@ scalaVersion := "2.13.10"
   assert_equal(scala_version, "2.13", "Should find scalaVersion even at end of file")
 end)
 
-test("get_scala_version returns nil for single quotes (invalid Scala syntax)", function()
+test("get_scala_version handles scalaVersion with single quotes", function()
   -- g i v e n
-  -- Note: In Scala, single quotes are for Char literals only, not strings
-  -- This test verifies parser correctly rejects invalid syntax
   local content = [[
 scalaVersion := '2.13.10'
 ]]
@@ -637,7 +587,7 @@ scalaVersion := '2.13.10'
   local scala_version = parser.get_scala_version(bufnr)
 
   -- t h e n
-  assert_equal(scala_version, nil, "Should return nil for invalid Scala syntax (single quotes)")
+  assert_equal(scala_version, "2.13", "Should handle single quotes")
 end)
 
 test("get_scala_version ignores commented scalaVersion", function()

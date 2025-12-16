@@ -24,7 +24,16 @@ local function get_scala_version_query()
 end
 
 local function get_node_text_without_quotes(node, bufnr)
-  return vim.treesitter.get_node_text(node, bufnr):gsub('"', '')
+  return vim.treesitter.get_node_text(node, bufnr):gsub('["\']', '')
+end
+
+local function detect_dep_type(operator_text)
+  if operator_text == "%%" then
+    return "scala"
+  elseif operator_text == "%" then
+    return "java"
+  end
+  return "unknown"
 end
 
 local function is_val_name_capture(capture_name)
@@ -90,7 +99,7 @@ local function create_dependency_key(org, artifact, version)
   return org .. ":" .. artifact .. ":" .. version
 end
 
-local function add_dependency_if_new(org, artifact, version, line, dependencies, seen)
+local function add_dependency_if_new(org, artifact, version, line, dep_type, dependencies, seen)
   local key = create_dependency_key(org, artifact, version)
   if not seen[key] then
     seen[key] = true
@@ -98,7 +107,8 @@ local function add_dependency_if_new(org, artifact, version, line, dependencies,
       group = org,
       artifact = artifact,
       version = version,
-      line = line
+      line = line,
+      type = dep_type or "unknown"
     })
   end
 end
@@ -108,7 +118,8 @@ local function save_current_match(current_match, last_line, val_values, dependen
   if not has_complete_dependency(current_match) then return end
 
   local version = resolve_version(current_match.version_text, val_values)
-  add_dependency_if_new(current_match.org, current_match.artifact, version, last_line, dependencies, seen)
+  local dep_type = detect_dep_type(current_match.operator or "")
+  add_dependency_if_new(current_match.org, current_match.artifact, version, last_line, dep_type, dependencies, seen)
 end
 
 local function should_save_previous_match(last_line, current_line, match_data)
@@ -143,6 +154,8 @@ local function collect_direct_dependencies(root, bufnr, val_values, dependencies
       current_match.artifact = get_node_text_without_quotes(node, bufnr)
     elseif is_version_capture(capture_name) then
       current_match.version_text = get_node_text_without_quotes(node, bufnr)
+    elseif capture_name == "dep_operator" or capture_name == "dep_operator2" then
+      current_match.operator = vim.treesitter.get_node_text(node, bufnr)
     end
   end
 
@@ -159,24 +172,28 @@ end
 
 local function extract_org_and_artifact(arg, bufnr)
   local org_node = arg:child(0)
+  local operator_node = arg:child(1)
   local artifact_node = arg:child(2)
 
   if not (is_string_node(org_node) and is_string_node(artifact_node)) then
-    return nil, nil
+    return nil, nil, nil
   end
 
+  local operator_text = operator_node and vim.treesitter.get_node_text(operator_node, bufnr) or ""
   return get_node_text_without_quotes(org_node, bufnr),
-         get_node_text_without_quotes(artifact_node, bufnr)
+         get_node_text_without_quotes(artifact_node, bufnr),
+         operator_text
 end
 
 local function process_seq_arg(arg, bufnr, version, dependencies, seen)
   if not is_infix_expression(arg) then return end
 
-  local org, artifact = extract_org_and_artifact(arg, bufnr)
+  local org, artifact, operator_text = extract_org_and_artifact(arg, bufnr)
   if not org or not artifact then return end
 
   local line_num = arg:range() + 1
-  add_dependency_if_new(org, artifact, version, line_num, dependencies, seen)
+  local dep_type = detect_dep_type(operator_text or "")
+  add_dependency_if_new(org, artifact, version, line_num, dep_type, dependencies, seen)
 end
 
 local function process_seq_children(seq_args, bufnr, version, dependencies, seen)
@@ -294,19 +311,21 @@ local function collect_single_dependencies(root, bufnr, val_values, dependencies
       else
         current_match.plus_eq = false
       end
+    elseif capture_name == "dep_operator_single" then
+      current_match.operator = vim.treesitter.get_node_text(node, bufnr)
     elseif capture_name == "org_single" then
       current_match.org = get_node_text_without_quotes(node, bufnr)
     elseif capture_name == "artifact_single" then
       current_match.artifact = get_node_text_without_quotes(node, bufnr)
     elseif capture_name == "version_single" then
-      -- Esta es la última captura, procesamos el match completo
       current_match.version_text = get_node_text_without_quotes(node, bufnr)
 
       if current_match.lib_dep_name and current_match.plus_eq and
          current_match.org and current_match.artifact and current_match.version_text and current_match.dep_node then
         local version = resolve_version(current_match.version_text, val_values)
         local line_num = current_match.dep_node:range() + 1
-        add_dependency_if_new(current_match.org, current_match.artifact, version, line_num, dependencies, seen)
+        local dep_type = detect_dep_type(current_match.operator or "")
+        add_dependency_if_new(current_match.org, current_match.artifact, version, line_num, dep_type, dependencies, seen)
       end
       current_match = {}
     end
@@ -339,29 +358,41 @@ local function extract_scala_binary_version(scala_version)
   return nil
 end
 
--- Busca scalaVersion en el build.sbt
-local function find_scala_version(root, bufnr)
+-- Busca scalaVersion en el build.sbt y devuelve la versión completa y la línea
+local function find_scala_full_version(root, bufnr)
   local scala_version_query = get_scala_version_query()
   local current_match = {}
+  local line_num = nil
 
   for id, node in scala_version_query:iter_captures(root, bufnr, 0, -1) do
     local capture_name = scala_version_query.captures[id]
 
     if capture_name == "scala_version_name" then
       current_match.name = vim.treesitter.get_node_text(node, bufnr)
+      line_num = node:range() + 1
     elseif capture_name == "scala_version_value" then
       current_match.value = get_node_text_without_quotes(node, bufnr)
 
       -- Cuando tenemos ambos, verificar y retornar
-      if current_match.name == "scalaVersion" and current_match.value then
-        return extract_scala_binary_version(current_match.value)
+      if current_match.name == "scalaVersion" and current_match.value and line_num then
+        return current_match.value, line_num
       end
 
       -- Resetear para el siguiente match
       current_match = {}
+      line_num = nil
     end
   end
 
+  return nil, nil
+end
+
+-- Busca scalaVersion en el build.sbt y devuelve la versión binaria (ej: "2.13")
+local function find_scala_version(root, bufnr)
+  local full_version, _ = find_scala_full_version(root, bufnr)
+  if full_version then
+    return extract_scala_binary_version(full_version)
+  end
   return nil
 end
 
@@ -371,7 +402,57 @@ function M.extract_dependencies(bufnr)
   local root = parse_tree(bufnr)
   local val_values = find_vals(root, bufnr)
 
-  return find_dependencies(root, bufnr, val_values)
+  local dependencies = find_dependencies(root, bufnr, val_values)
+
+  -- Add Scala version as a dependency if found
+  local scala_full_version = find_scala_version(root, bufnr)
+  if scala_full_version then
+    -- Determine if it's Scala 2 or Scala 3
+    local major_version = scala_full_version:match("^(%d+)%.%d+")
+    local group = "org.scala-lang"
+    local artifact
+    local dep_type = "java"  -- Scala compiler is a Java dependency
+
+    if major_version == "3" then
+      artifact = "scala3-library_3"
+    else
+      artifact = "scala-library"
+    end
+
+    -- Find the line where scalaVersion is defined
+    local scala_version_query = get_scala_version_query()
+    local scala_line = nil
+    for id, node in scala_version_query:iter_captures(root, bufnr, 0, -1) do
+      local capture_name = scala_version_query.captures[id]
+      if capture_name == "scala_version_name" then
+        local row = node:range()
+        scala_line = row + 1  -- Convert to 1-based line number
+        break
+      end
+    end
+
+    -- Get the full version (not just binary version) for the dependency
+    local full_version = nil
+    for id, node in scala_version_query:iter_captures(root, bufnr, 0, -1) do
+      local capture_name = scala_version_query.captures[id]
+      if capture_name == "scala_version_value" then
+        full_version = get_node_text_without_quotes(node, bufnr)
+        break
+      end
+    end
+
+    if scala_line and full_version then
+      table.insert(dependencies, {
+        group = group,
+        artifact = artifact,
+        version = full_version,
+        line = scala_line,
+        type = dep_type
+      })
+    end
+  end
+
+  return dependencies
 end
 
 function M.get_scala_version(bufnr)
